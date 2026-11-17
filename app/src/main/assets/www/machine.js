@@ -37,7 +37,11 @@ SCREENS.machine = {
 
       '<div class="h">Проверка режима под станок</div>' +
       '<div class="card">' +
-      '<div class="row2">' + fld('mc_d', 'Диаметр обработки', '60', 'мм') + fld('mc_vc', 'Vc', '180', 'м/мин') + '</div>' +
+      seg('mc_mode', [['vc','Постоянная Vc (G96)'],['n','Постоянные обороты (G97)']], 'vc') +
+      '<div class="row2">' +
+        '<div>' + fld('mc_d', 'Диаметр обработки', '60', 'мм') + '</div>' +
+        '<div id="mc_scell">' + mcField('vc') + '</div>' +
+      '</div>' +
       '<div class="res" id="mc_out"></div>' +
       '<div class="note">Лимиты: шпиндель 4000 об/мин, привод 22 кВт (S1). ' +
       'Для патрона 10" рабочие обороты обычно ограничивают 3000–3500 об/мин — зависит от кулачков.</div></div>' +
@@ -100,29 +104,68 @@ SCREENS.machine = {
        .map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>').join('') + '</table></div>';
   },
   mount(){
-    ['mc_d','mc_vc'].forEach(id => {
+    $('mc_mode').addEventListener('seg', mcModeSwitch);
+    ['mc_d','mc_vc','mc_n'].forEach(id => {
       const el = $(id); if(el){ el.addEventListener('input', mcCalc); el.addEventListener('change', mcCalc); }
     });
     mcCalc();
   }
 };
+function mcField(mode){
+  return mode === 'n'
+    ? fld('mc_n', 'Обороты n', '1000', 'об/мин', {ph:'постоянные обороты'})
+    : fld('mc_vc', 'Vc', '180', 'м/мин', {ph:'постоянная скорость'});
+}
+function mcModeSwitch(){
+  const mode = segVal('mc_mode') || 'vc';
+  const cell = $('mc_scell');
+  if(!cell) return;
+  const d = num('mc_d', 0);
+  const oldVc = num('mc_vc', 0);
+  const oldN = num('mc_n', 0);
+  if(mode === 'n'){
+    const n = oldN > 0 ? oldN : (d > 0 && oldVc > 0 ? Math.round(1000 * oldVc / (Math.PI * d)) : 1000);
+    cell.innerHTML = mcField('n');
+    $('mc_n').value = String(n);
+    $('mc_n').addEventListener('input', mcCalc);
+    $('mc_n').addEventListener('change', mcCalc);
+  } else {
+    const vc = oldVc > 0 ? oldVc : (d > 0 && oldN > 0 ? Math.PI * d * oldN / 1000 : 180);
+    cell.innerHTML = mcField('vc');
+    $('mc_vc').value = String(Math.round(vc * 10) / 10).replace('.', ',');
+    $('mc_vc').addEventListener('input', mcCalc);
+    $('mc_vc').addEventListener('change', mcCalc);
+  }
+  mcCalc();
+}
 function mcCalc(){
   const out = $('mc_out'); if(!out) return;
-  const d = num('mc_d', 0), vc = num('mc_vc', 0);
-  if(!(d > 0) || !(vc > 0)){ out.innerHTML = '<div class="note" style="grid-column:1/-1">Введите диаметр и Vc</div>'; return; }
-  const nRaw = 1000 * vc / (Math.PI * d);
-  const n = Math.round(nRaw);
+  const d = num('mc_d', 0);
+  const mode = segVal('mc_mode') || 'vc';
+  let n = 0, vc = 0;
+  if(mode === 'n'){
+    n = Math.round(num('mc_n', 0));
+    vc = d > 0 && n > 0 ? Math.PI * d * n / 1000 : 0;
+  } else {
+    vc = num('mc_vc', 0);
+    n = d > 0 && vc > 0 ? Math.round(1000 * vc / (Math.PI * d)) : 0;
+  }
+  if(!(d > 0) || !(n > 0)){ out.innerHTML = '<div class="note" style="grid-column:1/-1">Введите диаметр и ' + (mode === 'n' ? 'обороты' : 'Vc') + '</div>'; return; }
+  const vcFact = Math.PI * d * n / 1000;
   const over = n > 4000;
   const overChuck = n > 3500;
-  out.innerHTML = rbox('Обороты по Vc', fmt0(n), 'об/мин', over ? 'bad' : 'lead') +
+  out.innerHTML = rbox('Обороты n', fmt0(n), 'об/мин', over ? 'bad' : 'lead') +
+    rbox('Скорость резания Vc', fmt(vcFact, 1), 'м/мин') +
     rbox('Лимит шпинделя', '4000', 'об/мин') +
     (over
       ? '<div class="note" style="grid-column:1/-1"><b style="color:#ff6b73">Превышен лимит шпинделя.</b> ' +
         'Снизьте Vc до ' + fmt(Math.PI * d * 4000 / 1000, 0) + ' м/мин или задайте LIMS=4000.</div>'
       : (overChuck
         ? '<div class="note" style="grid-column:1/-1">Выше 3500 об/мин — проверьте допустимые обороты патрона и кулачков.</div>'
-        : '<div class="note" style="grid-column:1/-1">В пределах лимитов. Для G96 поставьте LIMS=' +
-          Math.min(4000, Math.ceil(n / 100) * 100) + '.</div>'));
+        : '<div class="note" style="grid-column:1/-1">В пределах лимитов. ' +
+          (mode === 'n'
+            ? 'Для G97 так и оставьте: S' + fmt0(n) + '.'
+            : 'Для G96 поставьте LIMS=' + Math.min(4000, Math.ceil(n / 100) * 100) + '.') + '</div>'));
 }
 
 /* ================= КОМАНДЫ 828D ================= */

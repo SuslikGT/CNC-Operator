@@ -5,7 +5,8 @@ SCREENS.insert = {
     return '<div class="card"><div class="search"><input class="inp" id="ins_q" type="text" autocomplete="off" ' +
       'placeholder="CNMG 120408" style="text-transform:uppercase"></div>' +
       '<button class="btn pri" type="button" id="ins_go">Расшифровать</button>' +
-      '<div id="ins_out" style="margin-top:12px"></div></div>' +
+      '<div id="ins_out" style="margin-top:12px"></div>' +
+      '<div class="scheme" id="ins_svg"></div></div>' +
       '<div class="h">Частые обозначения</div><div class="card">' +
       ['CNMG 120408','CNMG 120412','CCMT 09T304','DCMT 070204','VCMT 160404','TNMG 160408',
        'WNMG 080408','SCMT 09T308','RCMT 120400','DNMG 150608'].map(c =>
@@ -62,6 +63,8 @@ function insDecode(){
   let note = '';
   if(sh && (sh.a === 35 || sh.a === 55)) note = 'Острая кромка: подходит для чистовой и профильной обработки, черновую нагрузку не держит.';
   else if(sh && (sh.a === 90 || sh.a === 80)) note = 'Прочная кромка: черновая и получистовая обработка.';
+  const sv = $('ins_svg');
+  if(sv) sv.innerHTML = renderInsertSvg(raw);
   out.innerHTML = '<div style="font-size:20px;font-weight:700;color:#f2a33c;margin-bottom:8px">' + L +
     ' ' + size + th + rad + '</div>' + rows +
     (note ? '<div class="note">' + note + '</div>' : '') +
@@ -72,7 +75,17 @@ function insDecode(){
 SCREENS.holder = {
   title: 'Державки',
   render(){
-    return '<div class="h">Как читать обозначение</div><div class="card">' +
+    return '<div class="card">' +
+        '<div class="search"><input class="inp" id="hd_q" type="text" autocomplete="off" ' +
+          'placeholder="MCLNR 2525 M12" style="text-transform:uppercase"></div>' +
+        '<button class="btn pri" type="button" id="hd_go">Показать схему</button>' +
+        '<div class="scheme" id="hd_svg" style="margin-top:12px"></div>' +
+        '<div id="hd_out" style="margin-top:10px"></div>' +
+      '</div>' +
+      '<div class="mini" style="margin:0 2px 12px">Примеры: ' +
+        ['MCLNR 2525 M12','SDJCR 2525 M11','PCLNR 2020 K12','A25T-SDUCR11'].map(c =>
+          '<span class="pill" data-hd="' + c + '">' + c + '</span>').join('') + '</div>' +
+      '<div class="h">Как читать обозначение</div><div class="card">' +
       D.holders.letters.map(r => '<div class="kv"><span class="k">' + r[0] + '</span><span class="v">' +
         r[2] + '</span></div>').join('') +
       '<div class="note">Обозначения немного отличаются у Sandvik, Iscar, Korloy, Taegutec. ' +
@@ -98,8 +111,45 @@ SCREENS.holder = {
       '</table></div>' +
       '<div class="note"><b>M</b> и <b>P</b> в начале — способ крепления (прижим сверху / штифт). ' +
       'Для черновой работы прижим надёжнее, для чистовой — винт (лучше доступ к стружке).</div>';
+  },
+  mount(){
+    const q = $('hd_q');
+    if(!q) return;
+    const run = () => holderDecode();
+    q.addEventListener('input', run);
+    q.addEventListener('keydown', e => { if(e.key === 'Enter') run(); });
+    $('hd_go').addEventListener('click', run);
+    $$('[data-hd]').forEach(b => b.addEventListener('click', () => {
+      q.value = b.dataset.hd;
+      run();
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    }));
+    holderDecode();
   }
 };
+
+function holderDecode(){
+  const raw = val('hd_q');
+  const sv = $('hd_svg');
+  if(sv) sv.innerHTML = renderHolderSvg(raw);
+  const out = $('hd_out');
+  if(!out) return;
+  const p = parseHolderCode(raw);
+  if(!p){
+    out.innerHTML = '<div class="mini">Введите маркировку, например MCLNR 2525 M12</div>';
+    return;
+  }
+  const row = (k, v) => '<div class="kv"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>';
+  const shape = D.insertShapes[p.shape];
+  out.innerHTML =
+    row('Крепление', ({M:'прижим сверху', P:'штифт', D:'двойной прижим', S:'винт', C:'прижимная планка'})[p.clamp] || p.clamp) +
+    row('Форма пластины', shape ? shape.name + ' (' + p.shape + ')' : p.shape) +
+    row('Задний угол', D.relief[p.relief] || p.relief) +
+    row('Исполнение', p.boring ? 'расточная' : (p.hand === 'L' ? 'левая' : 'правая')) +
+    row('Хвостовик', p.h + '×' + p.w + ' мм') +
+    row('Длина', p.len === 'K' ? 'короткая' : p.len === 'P' ? 'длинная' : 'стандартная') +
+    (p.ins ? row('Пластина', p.ins + ' мм') : '');
+}
 
 SCREENS.drill = {
   title: 'Свёрла, метчики, фрезы',

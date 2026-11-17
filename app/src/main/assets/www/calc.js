@@ -1,6 +1,6 @@
 /* Калькуляторы: режимы, время, геометрия, шероховатость, единицы */
-function seg(id, items, cur){
-  let h = '<div class="seg" id="' + id + '" data-v="' + cur + '">';
+function seg(id, items, cur, cls){
+  let h = '<div class="seg' + (cls ? ' ' + cls : '') + '" id="' + id + '" data-v="' + cur + '">';
   items.forEach(it => {
     const v = it[0], t = it[1];
     h += '<button type="button" data-v="' + v + '"' + (v === cur ? ' class="on"' : '') + '>' + t + '</button>';
@@ -25,6 +25,12 @@ function bind(ids, fn){
     el.addEventListener('change', fn);
   });
 }
+/* Поле скорости: в G96 задаётся Vc, в G97 — обороты */
+function speedField(mode){
+  return mode === 'n'
+    ? fld('sp_n', 'Обороты n', '1200', 'об/мин', {ph:'постоянные обороты'})
+    : fld('sp_vc', 'Vc', '200', 'м/мин', {ph:'постоянная скорость'});
+}
 
 /* ================= РЕЖИМЫ РЕЗАНИЯ ================= */
 let spRows = [];
@@ -32,12 +38,21 @@ SCREENS.speed = {
   title: 'Режимы резания',
   render(){
     const matOpts = D.materials.map(m => [m.id, m.name]);
-    return seg('sp_op', [['turn','Точение'],['mill','Фрезеров.'],['drill','Сверление']], 'turn') +
-      seg('sp_tool', [['carb','Твердосплав'],['hss','HSS']], 'carb') +
-      '<div class="card">' +
+    return '<div class="card">' +
       selFld('sp_mat', 'Материал заготовки', matOpts, 'st20') +
-      '<div class="row2">' + fld('sp_d', 'Диаметр D', '40', 'мм') + fld('sp_vc', 'Vc', '200', 'м/мин') + '</div>' +
-      '<button class="btn ghost sm" type="button" id="sp_auto">Подставить Vc из справочника</button>' +
+      '<div class="cap">Операция</div>' +
+      seg('sp_op', [['turn','Точение'],['mill','Фрезеров.'],['drill','Сверление']], 'turn') +
+      '<div class="cap">Материал инструмента</div>' +
+      seg('sp_tool', [['carb','Твердосплав'],['hss','HSS']], 'carb') +
+      '<div class="mini" style="margin:-2px 2px 12px">Твердосплав — сменные пластины (CNMG, WNMG и др.), ' +
+        'HSS — быстрорежущая сталь (Р6М5, Р18): скорость резания в 3–4 раза ниже.</div>' +
+      '<div class="cap">Режим на станке</div>' +
+      seg('sp_mode', [['vc','Постоянная Vc (G96)'],['n','Постоянные обороты (G97)']], 'vc') +
+      '<div class="row2">' +
+        '<div id="sp_dcell">' + fld('sp_d', 'Диаметр D', '40', 'мм') + '</div>' +
+        '<div id="sp_scell">' + speedField('vc') + '</div>' +
+      '</div>' +
+      '<button class="btn ghost sm" type="button" id="sp_auto">Подставить из справочника</button>' +
       '<div class="row2" style="margin-top:10px">' +
         fld('sp_f', 'Подача', '0,25', 'мм/об', {ph:'точение/сверло'}) +
         fld('sp_ap', 'Глубина ap', '2', 'мм') +
@@ -64,52 +79,86 @@ SCREENS.speed = {
   mount(){
     const opEl = $('sp_op');
     opEl.addEventListener('seg', () => {
-      const op = segVal('sp_op');
-      $('sp_millrow').style.display = op === 'mill' ? 'grid' : 'none';
-      // для фрезы диаметр — диаметр фрезы, подача на зуб
-      if(op === 'mill'){ if($('sp_vc').value === '200' || !$('sp_vc').value) $('sp_vc').value = '180'; }
-      spCalc();
+      $('sp_millrow').style.display = segVal('sp_op') === 'mill' ? 'grid' : 'none';
+      spAuto();
     });
     $('sp_tool').addEventListener('seg', () => { spAuto(); });
-    ['sp_mat','sp_d','sp_vc','sp_f','sp_ap','sp_fz','sp_z','sp_ae','sp_p'].forEach(id => {
+    $('sp_mode').addEventListener('seg', spModeSwitch);
+    ['sp_d','sp_vc','sp_f','sp_ap','sp_fz','sp_z','sp_ae','sp_p'].forEach(id => {
       const el = $(id); if(el){ el.addEventListener('input', spCalc); el.addEventListener('change', spCalc); }
     });
+    const matEl = $('sp_mat');
+    if(matEl){
+      matEl.addEventListener('change', spAuto);
+      matEl.addEventListener('input', spAuto);
+    }
     $('sp_auto').addEventListener('click', spAuto);
     $('sp_save').addEventListener('click', () => saveCalc('Режимы резания', spRows));
     if(!$('sp_vc').value) $('sp_vc').value = '200';
     spCalc();
   }
 };
+function spModeSwitch(){
+  const mode = segVal('sp_mode') || 'vc';
+  const cell = $('sp_scell');
+  if(!cell) return;
+  const Dm = num('sp_d', 0);
+  const oldVc = num('sp_vc', 0);
+  const oldN = num('sp_n', 0);
+  if(mode === 'n'){
+    const n = oldN > 0 ? oldN : (Dm > 0 && oldVc > 0 ? Math.round(1000 * oldVc / (Math.PI * Dm)) : 1200);
+    cell.innerHTML = speedField('n');
+    $('sp_n').value = String(n);
+    bind(['sp_n'], spCalc);
+  } else {
+    const vc = oldVc > 0 ? oldVc : (Dm > 0 && oldN > 0 ? Math.PI * Dm * oldN / 1000 : 200);
+    cell.innerHTML = speedField('vc');
+    $('sp_vc').value = String(Math.round(vc * 10) / 10).replace('.', ',');
+    bind(['sp_vc'], spCalc);
+  }
+  spCalc();
+}
 
 function spBase(){
   const m = D.materials.find(x => x.id === val('sp_mat')) || D.materials[0];
   const op = segVal('sp_op') || 'turn';
   const tool = segVal('sp_tool') || 'carb';
-  let vc = num('sp_vc', 0);
-  return {m:m, op:op, tool:tool, vc:vc};
+  const mode = segVal('sp_mode') || 'vc';
+  const Dm = num('sp_d', 0);
+  let vc = 0, n = 0;
+  if(mode === 'n'){
+    n = Math.round(num('sp_n', 0));
+    vc = (Dm > 0 && n > 0) ? Math.PI * Dm * n / 1000 : 0;
+  } else {
+    vc = num('sp_vc', 0);
+    n = (Dm > 0 && vc > 0) ? Math.round(1000 * vc / (Math.PI * Dm)) : 0;
+  }
+  return {m:m, op:op, tool:tool, mode:mode, vc:vc, n:n};
 }
 function spAuto(){
   const b = spBase();
-  let v;
-  if(b.op === 'turn') v = b.vc || 0;
-  void v;
   let base;
-  if(b.op === 'turn') base = b.m.vc.rough;
+  if(b.op === 'turn') base = b.tool === 'hss' ? Math.round(b.m.vc.rough / 4) : b.m.vc.rough;
   else if(b.op === 'mill') base = b.tool === 'hss' ? b.m.vc.millHSS : b.m.vc.mill;
   else if(b.op === 'drill') base = b.tool === 'hss' ? b.m.vc.drill : b.m.vc.drillCarb;
   else base = b.m.vc.rough;
-  $('sp_vc').value = String(base).replace('.', ',');
+  const Dm = num('sp_d', 0);
+  if(b.mode === 'n'){
+    const n = Dm > 0 ? Math.round(1000 * base / (Math.PI * Dm)) : 0;
+    if($('sp_n')) $('sp_n').value = String(n);
+  } else {
+    $('sp_vc').value = String(base).replace('.', ',');
+  }
   spCalc();
 }
 function spCalc(){
   const b = spBase();
   const Dm = num('sp_d', 0);
-  const vc = b.vc;
+  const n = b.n;
+  const vcSet = b.vc;
   const out = $('sp_out');
   if(!out) return;
-  if(!(Dm > 0) || !(vc > 0)){ out.innerHTML = '<div class="note" style="grid-column:1/-1">Введите диаметр и Vc</div>'; return; }
-  const nRaw = 1000 * vc / (Math.PI * Dm);
-  const n = Math.round(nRaw);
+  if(!(Dm > 0) || !(n > 0) || !(vcSet > 0)){ out.innerHTML = '<div class="note" style="grid-column:1/-1">Введите диаметр и ' + (b.mode === 'n' ? 'обороты' : 'Vc') + '</div>'; return; }
   const vcFact = Math.PI * Dm * n / 1000;
   const kc = b.m.kc;
   let vf = 0, P = 0, detail = '';
@@ -151,9 +200,16 @@ function spCalc(){
         (isFinite(load) ? fmt(load, 0) + ' % из 100' : 'введите мощность привода') + '</span></div>' +
     '</div>' +
     '<div class="note" style="grid-column:1/-1">' + detail + '. ' +
-    (isFinite(load) && load > 85 ? '<b style="color:#e86b70">Перегрузка: снизьте ap или Vc.</b>' : 'Проверьте по мощности станка.') + '</div>';
+    (isFinite(load) && load > 85 ? '<b style="color:#e86b70">Перегрузка: снизьте ap или Vc.</b>' : 'Проверьте по мощности станка.') + '</div>' +
+    '<div class="note" style="grid-column:1/-1">' +
+      (b.mode === 'n'
+        ? '<b>G97 S' + fmt0(n) + '</b> — постоянные обороты; Vc на ⌀' + fmt(Dm, 1) + ' = ' + fmt(vcFact, 1) + ' м/мин.'
+        : '<b>G96 S' + fmt0(vcSet) + ' LIMS=' + Math.min(4000, Math.ceil(n / 100) * 100) +
+          '</b> — постоянная Vc; обороты на ⌀' + fmt(Dm, 1) + ' = ' + fmt0(n) + ' об/мин.') +
+    '</div>';
   spRows = [
-    ['Материал', b.m.name], ['Операция', b.op === 'turn' ? 'точение' : b.op === 'mill' ? 'фрезерование' : 'сверление'],
+    ['Материал', b.m.name], ['Режим', b.mode === 'n' ? 'G97, постоянные обороты' : 'G96, постоянная Vc'],
+    ['Операция', b.op === 'turn' ? 'точение' : b.op === 'mill' ? 'фрезерование' : 'сверление'],
     ['Диаметр', fmt(Dm, 1) + ' мм'], ['Vc', fmt(vcFact, 1) + ' м/мин'],
     ['Обороты', fmt0(n) + ' об/мин'], ['Подача', fmt(vf, 0) + ' мм/мин'],
     ['Мощность', fmt(P, 2) + ' кВт'], ['Загрузка', isFinite(load) ? fmt(load, 0) + ' %' : '—']
@@ -467,65 +523,4 @@ function dimH(x1, x2, y, label){
 }
 function emptyScheme(txt){
   return '<div class="mini" style="text-align:center;padding:16px 8px">' + txt + '</div>';
-}
-function svgChamfer(D, c, a){
-  if(!(D > 0) || !(c > 0)) return emptyScheme('Введите диаметр и катет фаски');
-  const cy = 78, maxH = 88, base = maxH / D;
-  const rad = (a > 0 ? a : 45) * Math.PI / 180;
-  let ex = 1;
-  if(c * base < 16) ex = Math.min(8, 16 / (c * base));
-  const px = Math.min(78, c * base * ex);
-  let py = Math.min(62, c * Math.tan(rad) * base * ex);
-  const top = cy - D * base / 2, bot = cy + D * base / 2;
-  const xR = 288, xL = 46;
-  if(top + py > cy) py = cy - top - 6;
-  const d = 'M' + xL + ',' + top + ' L' + (xR - px) + ',' + top + ' L' + xR + ',' + (top + py) +
-    ' L' + xR + ',' + bot + ' L' + xL + ',' + bot + ' Z';
-  const ghost = 'M' + (xR - px) + ',' + top + ' L' + xR + ',' + top + ' L' + xR + ',' + (top + py);
-  return '<svg viewBox="0 0 320 158">' +
-    '<path class="part" d="' + d + '"/>' +
-    '<path class="axis" d="M18,' + cy + 'H306"/>' +
-    '<path class="tool" d="' + ghost + '"/>' +
-    dimV(30, top, bot, '⌀' + fmt(D, 1)) +
-    '<text x="' + (xR - px - 4) + '" y="' + (top - 8) + '" text-anchor="end">c = ' + fmt(c, 2) + '</text>' +
-    '<text x="' + (xR - 2) + '" y="' + (top + py + 18) + '" text-anchor="end">' + fmt(a, 0) + '°</text>' +
-    '<text x="' + (xL + 6) + '" y="' + (bot + 16) + '">X ' + fmt(D - 2 * c, 2) + ' / Z ' + fmt(-c, 2) + '</text>' +
-    '</svg>';
-}
-function svgCone(d1, d2, L){
-  if(!(d1 > 0) || !(d2 > 0) || !(L > 0)) return emptyScheme('Введите D1, D2 и длину');
-  const cy = 74, maxH = 92, maxW = 196;
-  const s = Math.min(maxH / Math.max(d1, d2), maxW / L);
-  const h1 = d1 * s, h2 = d2 * s, w = Math.max(70, L * s);
-  const x1 = 64, x2 = Math.min(286, x1 + w);
-  const top1 = cy - h1 / 2, top2 = cy - h2 / 2;
-  const d = 'M' + x1 + ',' + top1 + ' L' + x2 + ',' + top2 + ' L' + x2 + ',' + (cy + h2 / 2) +
-    ' L' + x1 + ',' + (cy + h1 / 2) + ' Z';
-  const ang = Math.atan((d1 - d2) / (2 * L)) * 180 / Math.PI;
-  const baseY = Math.max(cy + h1 / 2, cy + h2 / 2) + 20;
-  return '<svg viewBox="0 0 320 158">' +
-    '<path class="part" d="' + d + '"/>' +
-    '<path class="axis" d="M16,' + cy + 'H304"/>' +
-    dimV(40, top1, cy + h1 / 2, 'D1 ' + fmt(d1, 1)) +
-    dimV(300, top2, cy + h2 / 2, 'D2 ' + fmt(d2, 1)) +
-    dimH(x1, x2, baseY, 'L ' + fmt(L, 1)) +
-    '<text x="' + (x2 - 4) + '" y="' + (cy - 8) + '" text-anchor="end">' + fmt(ang, 2) + '°</text>' +
-    '</svg>';
-}
-function svgFillet(r){
-  if(!(r > 0)) return emptyScheme('Введите радиус');
-  const rp = Math.max(14, Math.min(64, r * 4));
-  const x0 = 66, y0 = 56, x1 = 272, y1 = 128;
-  const d = 'M' + x0 + ',' + (y0 + rp) + ' A' + rp + ',' + rp + ' 0 0 1 ' + (x0 + rp) + ',' + y0 +
-    ' L' + x1 + ',' + y0 + ' L' + x1 + ',' + y1 + ' L' + x0 + ',' + y1 + ' Z';
-  const cxp = x0 + rp, cyp = y0 + rp;
-  const mx = x0 + rp * (1 - Math.SQRT1_2), my = y0 + rp * (1 - Math.SQRT1_2);
-  return '<svg viewBox="0 0 320 158">' +
-    '<path class="part" d="' + d + '"/>' +
-    '<path class="tool" d="M' + x0 + ',' + cyp + ' L' + cxp + ',' + cyp + ' L' + cxp + ',' + y0 + '"/>' +
-    '<circle cx="' + cxp + '" cy="' + cyp + '" r="2.6" class="hl"/>' +
-    '<path class="dim" d="M' + cxp + ',' + cyp + ' L' + mx + ',' + my + '"/>' +
-    '<text x="' + (cxp + 8) + '" y="' + (cyp + 16) + '">r = ' + fmt(r, 2) + '</text>' +
-    '<text x="' + (x0 + 4) + '" y="' + (y1 + 16) + '">' + fmt(2 * r, 1) + ' × ' + fmt(2 * r, 1) + '</text>' +
-    '</svg>';
 }

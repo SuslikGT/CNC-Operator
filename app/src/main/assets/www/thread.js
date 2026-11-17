@@ -2,18 +2,19 @@
 SCREENS.thread = {
   title: 'Резьба и отверстия',
   render(){
-    const lists = {
-      metric: D.metric, fine: D.metricFine, unc: D.unc, unf: D.unf, pipe: D.pipe, trap: D.trap
-    };
-    const names = {metric:'Метрическая', fine:'Метрическая мелкая', unc:'Дюймовая UNC',
-      unf:'Дюймовая UNF', pipe:'Трубная G', trap:'Трапецеидальная Tr'};
-    let h = seg('th_type', Object.keys(names).map(k => [k, names[k]]), 'metric');
+    const names = {metric:'Метрич.', fine:'Мелкая', unc:'UNC', unf:'UNF', pipe:'Трубная G', trap:'Трап. Tr'};
+    let h = '<div class="cap">Тип резьбы</div>' +
+      seg('th_type', Object.keys(names).map(k => [k, names[k]]), 'metric', 'wrap');
     h += '<div class="card">' +
       '<label class="f"><span>Резьба из таблицы</span><div class="iw"><select class="inp" id="th_sel">' +
       D.metric.map(r => '<option value="' + r[1] + '|' + r[2] + '">' + r[0] + '</option>').join('') +
       '</select></div></label>' +
       '<div class="row2">' + fld('th_d', 'Наружный диаметр d', '6', 'мм') + fld('th_p', 'Шаг P', '1', 'мм') + '</div>' +
-      '<div class="row2">' + fld('th_vc', 'Vc метчика/резца', '10', 'м/мин') + fld('th_cut', 'Съём за проход', '0,1', 'мм') + '</div>' +
+      seg('th_mode', [['vc','Постоянная Vc (G96)'],['n','Постоянные обороты (G97)']], 'vc') +
+      '<div class="row2">' +
+        '<div id="th_scell">' + thField('vc') + '</div>' +
+        '<div>' + fld('th_cut', 'Съём за проход', '0,1', 'мм') + '</div>' +
+      '</div>' +
       '<div class="scheme" id="th_svg"></div>' +
       '<div class="res" id="th_out"></div>' +
       '<button class="btn ghost sm" type="button" id="th_save" style="margin-top:8px">Сохранить расчёт</button>' +
@@ -45,24 +46,61 @@ SCREENS.thread = {
     return h;
   },
   mount(){
-    const fillSel = () => {
+    const fillSel = (useCurrent) => {
       const t = segVal('th_type') || 'metric';
       const list = {metric:D.metric, fine:D.metricFine, unc:D.unc, unf:D.unf, pipe:D.pipe, trap:D.trap}[t] || D.metric;
       const s = $('th_sel');
+      if(!s) return;
       s.innerHTML = list.map(r => '<option value="' + r[1] + '|' + r[2] + '">' + r[0] + '</option>').join('');
+      if(useCurrent){
+        const curD = num('th_d', 0), curP = num('th_p', 0);
+        const m = list.find(r => Math.abs(r[1] - curD) < 0.01 && Math.abs(r[2] - curP) < 0.01);
+        if(m) s.value = m[1] + '|' + m[2];
+        thCalc();
+        return;
+      }
       const def = list.find(r => Math.abs(r[1] - 6) < 0.01) || list[0];
       s.value = def[1] + '|' + def[2];
       thApply();
     };
-    $('th_type').addEventListener('seg', fillSel);
+    $('th_type').addEventListener('seg', () => fillSel(false));
     $('th_sel').addEventListener('change', thApply);
-    ['th_d','th_p','th_vc','th_cut'].forEach(id => {
+    $('th_mode').addEventListener('seg', thModeSwitch);
+    ['th_d','th_p','th_vc','th_n','th_cut'].forEach(id => {
       const el = $(id); if(el){ el.addEventListener('input', thCalc); el.addEventListener('change', thCalc); }
     });
     $('th_save').addEventListener('click', () => saveCalc('Резьба', thRows));
-    fillSel();
+    fillSel(true);
   }
 };
+/* Поле скорости: в G96 — Vc, в G97 — обороты */
+function thField(mode){
+  return mode === 'n'
+    ? fld('th_n', 'Обороты n', '530', 'об/мин', {ph:'постоянные обороты'})
+    : fld('th_vc', 'Vc метчика/резца', '10', 'м/мин', {ph:'постоянная скорость'});
+}
+function thModeSwitch(){
+  const mode = segVal('th_mode') || 'vc';
+  const cell = $('th_scell');
+  if(!cell) return;
+  const d = num('th_d', 0);
+  const oldVc = num('th_vc', 0);
+  const oldN = num('th_n', 0);
+  if(mode === 'n'){
+    const n = oldN > 0 ? oldN : (d > 0 && oldVc > 0 ? Math.round(1000 * oldVc / (Math.PI * d)) : 530);
+    cell.innerHTML = thField('n');
+    $('th_n').value = String(n);
+    $('th_n').addEventListener('input', thCalc);
+    $('th_n').addEventListener('change', thCalc);
+  } else {
+    const vc = oldVc > 0 ? oldVc : (d > 0 && oldN > 0 ? Math.PI * d * oldN / 1000 : 10);
+    cell.innerHTML = thField('vc');
+    $('th_vc').value = String(Math.round(vc * 10) / 10).replace('.', ',');
+    $('th_vc').addEventListener('input', thCalc);
+    $('th_vc').addEventListener('change', thCalc);
+  }
+  thCalc();
+}
 function thApply(){
   const v = String(val('th_sel')).split('|');
   if(v.length < 2) return;
@@ -81,10 +119,17 @@ function thCalc(){
   const H = 0.866 * P;
   const h3 = 0.6134 * P;
   const drill = d - P;
-  const vc = num('th_vc', 10);
+  const mode = segVal('th_mode') || 'vc';
+  let vc, n;
+  if(mode === 'n'){
+    n = Math.round(num('th_n', 0));
+    vc = Math.PI * d * n / 1000;
+  } else {
+    vc = num('th_vc', 10);
+    n = Math.round(1000 * vc / (Math.PI * d));
+  }
   const sv = $('th_svg');
   if(sv) animScheme('thread', sv, [d, P], renderThread);
-  const n = Math.round(1000 * vc / (Math.PI * d));
   const depth = h3;
   const cut = num('th_cut', 0.1);
   const passes = cut > 0 ? Math.ceil(depth / cut) : NaN;
@@ -96,44 +141,14 @@ function thCalc(){
     rbox('Высота профиля h', fmt(depth, 3), 'мм') +
     rbox('Сверло под резьбу', fmt(drill, 2), 'мм') +
     rbox('Обороты метчика', fmt0(n), 'об/мин') +
+    rbox('Скорость резания Vc', fmt(vc, 1), 'м/мин') +
     rbox('Подача (шаг)', fmt(P, 3), 'мм/об') +
     rbox('Проходов резца', fmt0(passes), 'шт') +
     '<div class="note" style="grid-column:1/-1">Высота исходного треугольника H = ' + fmt(H, 3) +
     ' мм · ширина впадины ' + fmt(P / 2, 3) + ' мм · ' + fmt(tpi, 2) + ' ниток на дюйм. ' +
-    'Первый проход резца — 60 % от заданного съёма, последний — 0,05 мм.</div>';
+    'Первый проход резца — 60 % от заданного съёма, последний — 0,05 мм.</div>' +
+    '<div class="note" style="grid-column:1/-1">Резьба режется только на постоянных оборотах: ' +
+    '<b>G97 S' + fmt0(n) + '</b> (G96 для G33 не используется).</div>';
   thRows = [['Резьба', '⌀' + fmt(d, 2) + ' × ' + fmt(P, 2)], ['d2', fmt(d2, 3) + ' мм'],
     ['Сверло', fmt(drill, 2) + ' мм'], ['Обороты', fmt0(n) + ' об/мин']];
-}
-
-/* схема профиля резьбы */
-function svgThread(d, P){
-  if(!(d > 0) || !(P > 0)) return emptyScheme('Введите диаметр и шаг');
-  const cy = 70, pitch = 56, depth = 40;
-  const crestY = cy - depth / 2, rootY = cy + depth / 2;
-  const x0 = 16, steps = 3;
-  let p = 'M' + x0 + ',' + crestY;
-  for(let i = 0; i < steps; i++){
-    const x = x0 + i * pitch;
-    p += ' L' + (x + pitch * .22) + ',' + crestY;
-    p += ' L' + (x + pitch * .40) + ',' + rootY;
-    p += ' L' + (x + pitch * .60) + ',' + rootY;
-    p += ' L' + (x + pitch * .78) + ',' + crestY;
-    p += ' L' + (x + pitch) + ',' + crestY;
-  }
-  const xEnd = x0 + steps * pitch;
-  const bodyBottom = rootY + 32;
-  const d2 = d - 0.6495 * P, d1 = d - 1.0825 * P;
-  const yMid = cy - depth * 0.1;
-  const lx = xEnd + 42;
-  return '<svg viewBox="0 0 320 158">' +
-    '<path class="part" d="' + p + ' L' + xEnd + ',' + bodyBottom + ' L' + x0 + ',' + bodyBottom + ' Z"/>' +
-    '<path class="axis" d="M8,' + cy + 'H314"/>' +
-    '<path class="dim" d="M' + x0 + ',' + crestY + 'H' + (xEnd + 30) + '"/>' +
-    '<path class="dim" d="M' + x0 + ',' + yMid + 'H' + (xEnd + 30) + '"/>' +
-    '<path class="dim" d="M' + x0 + ',' + rootY + 'H' + (xEnd + 30) + '"/>' +
-    '<text x="' + lx + '" y="' + (crestY + 4) + '">d ' + fmt(d, 2) + '</text>' +
-    '<text x="' + lx + '" y="' + (yMid + 4) + '">d2 ' + fmt(d2, 2) + '</text>' +
-    '<text x="' + lx + '" y="' + (rootY + 4) + '">d1 ' + fmt(d1, 2) + '</text>' +
-    dimH(x0, x0 + pitch, bodyBottom + 12, 'P ' + fmt(P, 2)) +
-    '</svg>';
 }

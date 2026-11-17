@@ -11,7 +11,6 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -117,21 +116,6 @@ public class MainActivity extends Activity {
                         }
                     }
                 });
-    }
-
-    @Override
-    public boolean onKeyDown(int code, KeyEvent event) {
-        if (code == KeyEvent.KEYCODE_BACK && web != null) {
-            web.evaluateJavascript("(window.appBack && window.appBack()) ? '1' : '0'",
-                    new ValueCallback<String>() {
-                        @Override
-                        public void onReceiveValue(String value) {
-                            if (!"\"1\"".equals(value)) finish();
-                        }
-                    });
-            return true;
-        }
-        return super.onKeyDown(code, event);
     }
 
     private boolean openOutside(String url) {
@@ -251,8 +235,8 @@ public class MainActivity extends Activity {
                     try {
                         c = (HttpURLConnection) new URL(url).openConnection();
                         c.setRequestMethod("POST");
-                        c.setConnectTimeout(10000);
-                        c.setReadTimeout(10000);
+                        c.setConnectTimeout(15000);
+                        c.setReadTimeout(45000);
                         c.setDoOutput(true);
                         c.setRequestProperty("Content-Type", "application/json; charset=utf-8");
                         c.setRequestProperty("Accept", "application/json");
@@ -275,6 +259,7 @@ public class MainActivity extends Activity {
                             body = bo.toString("UTF-8");
                         }
                     } catch (Exception ignored) {
+                        body = "ERR:" + ignored.getClass().getSimpleName();
                     } finally {
                         if (c != null) c.disconnect();
                     }

@@ -132,14 +132,13 @@ function renderFillet(v){
 function renderThread(v){
   const d = v[0], P = v[1];
   if(!(d > 0) || !(P > 0)) return emptyScheme('Введите диаметр и шаг резьбы');
-  const cy = 68;
-  const s = Math.min(88 / d, 196 / (3 * P));
-  const pitch = Math.max(14, P * s);
-  const depth = Math.min(48, 0.6134 * P * s * 1.15);
-  const x0 = 20;
+  const W = 340, x0 = 24, x1 = 224, turns = 3;
+  const pitch = (x1 - x0) / turns;
+  const cy = 82;
+  const depth = Math.max(40, Math.min(56, pitch * 0.62));
   const crestY = cy - depth / 2, rootY = cy + depth / 2;
-  let p = 'M' + x0 + ',' + n1(crestY);
-  for(let i = 0; i < 3; i++){
+  let p = 'M' + n1(x0) + ',' + n1(crestY);
+  for(let i = 0; i < turns; i++){
     const x = x0 + i * pitch;
     p += ' L' + n1(x + pitch * 0.22) + ',' + n1(crestY);
     p += ' L' + n1(x + pitch * 0.40) + ',' + n1(rootY);
@@ -147,20 +146,20 @@ function renderThread(v){
     p += ' L' + n1(x + pitch * 0.78) + ',' + n1(crestY);
     p += ' L' + n1(x + pitch) + ',' + n1(crestY);
   }
-  const xEnd = x0 + 3 * pitch;
   const d2 = d - 0.6495 * P, d1 = d - 1.0825 * P;
-  const yMid = cy - depth * 0.16;
-  const lx = Math.min(300, xEnd + 48);
-  return '<svg viewBox="0 0 320 172">' +
-    '<path class="part" d="' + p + ' L' + n1(xEnd) + ',' + n1(rootY + 30) + ' L' + x0 + ',' + n1(rootY + 30) + ' Z"/>' +
-    '<path class="axis" d="M10,' + cy + 'H312"/>' +
-    '<path class="dim" d="M' + (x0 + 4) + ',' + n1(crestY) + 'H' + n1(xEnd + 34) + '"/>' +
-    '<path class="dim" d="M' + (x0 + 4) + ',' + n1(yMid) + 'H' + n1(xEnd + 34) + '"/>' +
-    '<path class="dim" d="M' + (x0 + 4) + ',' + n1(rootY) + 'H' + n1(xEnd + 34) + '"/>' +
+  const lx = x1 + 12;
+  const y2 = cy - depth * 0.16;
+  const bodyBottom = rootY + 26;
+  return '<svg viewBox="0 0 ' + W + ' 170">' +
+    '<path class="part" d="' + p + ' L' + n1(x1) + ',' + n1(bodyBottom) + ' L' + x0 + ',' + n1(bodyBottom) + ' Z"/>' +
+    '<path class="axis" d="M8,' + cy + 'H' + (W - 8) + '"/>' +
+    '<path class="dim" d="M' + n1(x0 + 4) + ',' + n1(crestY) + 'H' + n1(lx - 6) + '"/>' +
+    '<path class="dim" d="M' + n1(x0 + 4) + ',' + n1(y2) + 'H' + n1(lx - 6) + '"/>' +
+    '<path class="dim" d="M' + n1(x0 + 4) + ',' + n1(rootY) + 'H' + n1(lx - 6) + '"/>' +
     '<text class="calc" x="' + lx + '" y="' + n1(crestY + 4) + '">d ' + fmt(d, 2) + '</text>' +
-    '<text x="' + lx + '" y="' + n1(yMid + 4) + '">d2 ' + fmt(d2, 2) + '</text>' +
+    '<text x="' + lx + '" y="' + n1(y2 + 4) + '">d2 ' + fmt(d2, 2) + '</text>' +
     '<text x="' + lx + '" y="' + n1(rootY + 4) + '">d1 ' + fmt(d1, 2) + '</text>' +
-    dimH(x0, x0 + pitch, rootY + 22, 'P ' + fmt(P, 2)) +
-    scaleBar(20, 152, s, 110) +
+    dimH(x0, x0 + pitch, bodyBottom + 16, 'P ' + fmt(P, 2)) +
+    '<text class="hint" x="' + x0 + '" y="162">3 витка, профиль схематично</text>' +
     '</svg>';
 }

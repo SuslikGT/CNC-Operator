@@ -1,8 +1,8 @@
 /* Ядро: роутер, хранилище, помощники */
 const SCREENS = {};
 window.SCREENS = SCREENS;
-const APP_VERSION = '2.0';
-const APP_VERSION_CODE = 11;
+const APP_VERSION = '2.0.08';
+const APP_VERSION_CODE = 15;
 const $ = id => document.getElementById(id);
 const $$ = sel => Array.prototype.slice.call(document.querySelectorAll(sel));
 
@@ -111,6 +111,7 @@ function animateResults(root){
   Array.prototype.forEach.call(els, el => {
     const small = el.querySelector('small');
     const txt = el.textContent.replace(/\u00a0/g, ' ').trim();
+    if(!/^-?[\d\s]*(?:[.,]\d+)?$/.test(txt)) return;
     const m = txt.match(/^(-?[\d\s]*(?:[.,]\d+)?)/);
     if(!m || !m[1] || !/\d/.test(m[1])) return;
     const target = parseFloat(m[1].replace(/\s/g, '').replace(',', '.'));
@@ -241,7 +242,6 @@ function restoreInputs(screen){
     const v = lsGet(keyFor(screen, el.id), null);
     if(v !== null) el.value = v;
   });
-  saveInputsInit = true;
 }
 function bindInputs(){
   const view = $('view');

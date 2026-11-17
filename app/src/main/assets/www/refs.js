@@ -65,10 +65,14 @@ SCREENS.corr = {
       '<div class="card"><div class="h" style="margin-top:0">Промер длины</div>' +
       '<div class="row2">' + fld('cr_znom', 'Номинал Z', '20', 'мм') + fld('cr_zmeas', 'Измерено Z', '20,03', 'мм') + '</div>' +
       '<div class="res" id="cr_out2"></div></div>' +
-      '<div class="card"><div class="h" style="margin-top:0">Привязка нуля G54</div>' +
-      '<div class="row2">' + fld('cr_mach', 'Машинная координата при касании', '412,5', 'мм') +
-      fld('cr_base', 'База детали', '0', 'мм') + '</div>' +
-      '<div class="res" id="cr_out3"></div></div>' +
+      '<div class="card"><div class="h" style="margin-top:0">Привязка нуля G54 — X (ось)</div>' +
+      '<div class="row2">' + fld('cr_xm', 'Машинная X при касании', '122,4', 'мм') +
+      fld('cr_xd', 'Измеренный Ø в точке касания', '40', 'мм') + '</div>' +
+      '<div class="res" id="cr_outx"></div></div>' +
+      '<div class="card"><div class="h" style="margin-top:0">Привязка нуля G54 — Z (торец)</div>' +
+      '<div class="row2">' + fld('cr_zm', 'Машинная Z при касании торца', '412,5', 'мм') +
+      fld('cr_zb', 'Координата торца в детали', '0', 'мм') + '</div>' +
+      '<div class="res" id="cr_outz"></div></div>' +
       '<div class="h">Как это работает</div><div class="card"><ul class="list">' +
       '<li>В Sinumerik корректор по <b>X задаётся радиусом</b> (расстояние от оси), поэтому отклонение диаметра делим на 2.</li>' +
       '<li>Деталь <b>больше</b> номинала — корректор X <b>уменьшаем</b>. Меньше — увеличиваем.</li>' +
@@ -81,7 +85,7 @@ SCREENS.corr = {
       'Изменение корректора действует со следующего кадра с этим D-номером.</div>';
   },
   mount(){
-    ['cr_nom','cr_meas','cr_cur','cr_znom','cr_zmeas','cr_mach','cr_base'].forEach(id => {
+    ['cr_nom','cr_meas','cr_cur','cr_znom','cr_zmeas','cr_xm','cr_xd','cr_zm','cr_zb'].forEach(id => {
       const el = $(id); if(el){ el.addEventListener('input', crCalc); el.addEventListener('change', crCalc); }
     });
     crCalc();
@@ -115,15 +119,29 @@ function crCalc(){
         'Для торца и уступов проверяйте направление оси на вашем станке.</div>';
     } else o2.innerHTML = '';
   }
-  const mc = num('cr_mach', 0), bs = num('cr_base', 0);
-  const o3 = $('cr_out3');
-  if(o3){
-    if(isFinite(mc)){
-      o3.innerHTML = rbox('Ноль G54', fmt(mc - bs, 3), 'мм', 'lead') +
-        '<div class="note" style="grid-column:1/-1">Если касание базы выполнено вершиной резца, ' +
-        'машинная координата этой точки и есть смещение нуля (с учётом корректора длины). ' +
-        'Удобнее пользоваться измерительным циклом стойки.</div>';
-    } else o3.innerHTML = '';
+  const xm = num('cr_xm', 0), xd = num('cr_xd', 0);
+  const ox = $('cr_outx');
+  if(ox){
+    if(xm !== 0 && xd > 0){
+      const g54x = xm - xd;
+      ox.innerHTML = rbox('Ноль G54 по X', fmt(g54x, 3), 'мм', 'lead') +
+        rbox('Проверка: деталь Ø', fmt(xd, 1), 'мм') +
+        '<div class="note" style="grid-column:1/-1">Ноль по X — ось шпинделя. В Sinumerik X задаётся в диаметрах, ' +
+        'поэтому <b>G54 X = машинная X − измеренный Ø</b>. Значения берите с включённым корректором того резца, ' +
+        'которым касались. При радиальной индикации X вычтите радиус (Ø/2).</div>';
+    } else ox.innerHTML = '';
+  }
+  const mzj = num('cr_zm', 0), zbase = num('cr_zb', 0);
+  const oz = $('cr_outz');
+  if(oz){
+    if(mzj !== 0){
+      const g54z = mzj - zbase;
+      oz.innerHTML = rbox('Ноль G54 по Z', fmt(g54z, 3), 'мм', 'lead') +
+        rbox('Торец в детали', fmt(zbase, 2), 'мм') +
+        '<div class="note" style="grid-column:1/-1">Касание торца вершиной резца с активным корректором D: ' +
+        '<b>G54 Z = машинная Z − координата торца</b> (обычно 0, если торец — база детали). ' +
+        'Для уступа с известной глубиной подставьте её координату вместо нуля.</div>';
+    } else oz.innerHTML = '';
   }
 }
 

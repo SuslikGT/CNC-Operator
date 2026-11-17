@@ -1,6 +1,6 @@
 {
-  "version": "2.0",
-  "versionCode": 11,
-  "url": "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-2.0.apk",
-  "notes": "Исправлены таблица крепежа, толщина пластин T3, кнопка «Назад» на Android 13+, поворот экрана."
+  "version": "2.0.08",
+  "versionCode": 15,
+  "url": "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-2.0.08.apk",
+  "notes": "Режимы резания: порядок полей и живой пересчёт. Раздел G96/G97 в режимах, станке и резьбе. Схема резьбы крупнее, тип резьбы в две строки. Привязка нуля G54 по X и Z разделена. Отчёты открываются для просмотра. Исправлено название приложения на иконке."
 }
