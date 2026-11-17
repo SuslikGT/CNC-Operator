@@ -1,6 +1,6 @@
 {
-  "version": "1.9",
-  "versionCode": 10,
-  "url": "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-1.9.apk",
-  "notes": "Новый значок: деталь и резец."
+  "version": "2.0",
+  "versionCode": 11,
+  "url": "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-2.0.apk",
+  "notes": "Исправлены таблица крепежа, толщина пластин T3, кнопка «Назад» на Android 13+, поворот экрана."
 }

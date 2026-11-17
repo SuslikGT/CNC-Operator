@@ -103,6 +103,23 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onBackPressed() {
+        if (web == null) {
+            super.onBackPressed();
+            return;
+        }
+        web.evaluateJavascript("(window.appBack && window.appBack()) ? '1' : '0'",
+                new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+                        if (!"\"1\"".equals(value)) {
+                            finish();
+                        }
+                    }
+                });
+    }
+
+    @Override
     public boolean onKeyDown(int code, KeyEvent event) {
         if (code == KeyEvent.KEYCODE_BACK && web != null) {
             web.evaluateJavascript("(window.appBack && window.appBack()) ? '1' : '0'",

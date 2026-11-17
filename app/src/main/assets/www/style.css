@@ -291,7 +291,7 @@ input[type=checkbox]{
 .empty{text-align:center; color:var(--mut); font-size:13.5px; padding:34px 14px; line-height:1.6}
 .del{
   background:transparent; border:0; color:var(--err); font-size:22px; line-height:1;
-  padding:4px 8px; border-radius:10px; font-family:inherit;
+  padding:9px 10px; min-width:40px; min-height:40px; border-radius:10px; font-family:inherit;
 }
 .del:active{background:rgba(255,107,115,.12)}
 .search{position:relative; display:flex; align-items:center}

@@ -255,6 +255,7 @@ SCREENS.hist = {
       lsSet('hist', h); paint();
     }));
     $$('[data-hclear]').forEach(b => b.addEventListener('click', () => {
+      if(!window.confirm('Очистить историю расчётов?')) return;
       clearHist(); paint(); toast('История очищена');
     }));
   }
@@ -267,7 +268,7 @@ SCREENS.refs = {
     let h = '<div class="h">Крепёж и отверстия под резьбу</div>' +
       '<div class="tw"><table><tr><th>Резьба</th><th class="n">S под ключ</th><th class="n">Сверло</th><th class="n">Отв. в металле</th></tr>' +
       D.fasteners.map(r => '<tr><td>' + r[0] + '</td><td class="n">' + r[1] + '</td><td class="n">' + r[3] +
-        '</td><td class="n">' + fmt(parseFloat(r[1]) + 0.5, 1) + '</td></tr>').join('') + '</table></div>' +
+        '</td><td class="n">' + fmt(r[4], 1) + '</td></tr>').join('') + '</table></div>' +
       '<div class="note">S — размер ключа/головки. Отверстие в металле — сквозное с зазором, под шпильку.</div>' +
       '<div class="h">Конусы Морзе</div>' +
       '<div class="tw"><table><tr><th>Конус</th><th class="n">D, мм</th><th class="n">d, мм</th><th class="n">Длина, мм</th></tr>' +

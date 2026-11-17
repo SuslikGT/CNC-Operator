@@ -10,5 +10,6 @@ captures/
 .cxx/
 .externalNativeBuild/
 *.apk
+!dist/*.apk
 *.ap_
 *.bak

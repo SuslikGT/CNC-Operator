@@ -20,6 +20,7 @@ SCREENS.thread = {
       '</div>' +
       '<div class="h">Отверстия под резьбу</div>' +
       '<div class="card" style="padding:0"><div class="tw"><table>' +
+      '<tr><th>Резьба</th><th class="n">Шаг</th><th class="n">Сверло</th><th class="n">d2</th></tr>' +
       D.metric.filter(r => r[1] >= 3 && r[1] <= 30).map(r => {
         const d = r[1], p = r[2];
         return '<tr><td>' + r[0] + '</td><td class="n">' + fmt(p, 2) + '</td><td class="n">' +

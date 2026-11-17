@@ -17,7 +17,10 @@ function appVersion(){
       if(n) return {name: n, code: Native.versionCode()};
     }
   }catch(e){}
-  return {name: '1.9', code: 10};
+  return {
+    name: (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '—'),
+    code: (typeof APP_VERSION_CODE !== 'undefined' ? APP_VERSION_CODE : 0)
+  };
 }
 function httpGetText(url){
   return new Promise(resolve => {
@@ -126,6 +129,7 @@ function doInstall(){
     try{
       if(Native.canInstall && !Native.canInstall()){
         toast('Разрешите установку приложений из этого источника');
+        return;
       }
       Native.installUpdate(u.url, 'Версия ' + u.version);
     }catch(e){ toast('Ошибка запуска загрузки'); }
