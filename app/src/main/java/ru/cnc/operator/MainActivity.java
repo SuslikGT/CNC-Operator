@@ -50,7 +50,17 @@ public class MainActivity extends Activity {
 
         web.setBackgroundColor(Color.parseColor("#0E1318"));
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        web.setWebViewClient(new WebViewClient());
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return openOutside(url);
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {
+                return openOutside(request.getUrl().toString());
+            }
+        });
         web.addJavascriptInterface(new NativeBridge(), "Native");
         setContentView(web);
 
@@ -107,6 +117,19 @@ public class MainActivity extends Activity {
         return super.onKeyDown(code, event);
     }
 
+    private boolean openOutside(String url) {
+        if (url == null) return false;
+        if (url.startsWith("file://") || url.startsWith("about:")) return false;
+        try {
+            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        } catch (Exception e) {
+            toast("Не удалось открыть ссылку");
+        }
+        return true;
+    }
+
     private void toast(final String msg) {
         runOnUiThread(new Runnable() {
             @Override public void run() {
@@ -149,6 +172,15 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void toastMsg(final String msg) {
             toast(msg);
+        }
+
+        @JavascriptInterface
+        public void openUrl(final String url) {
+            runOnUiThread(new Runnable() {
+                @Override public void run() {
+                    openOutside(url);
+                }
+            });
         }
 
         /** Асинхронный GET: результат отдаём в window.__nativeHttp(cbId, body). */

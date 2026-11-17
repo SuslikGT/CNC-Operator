@@ -33,6 +33,7 @@ SCREENS.about = {
       '<div class="h">Данные</div><div class="card">' +
         '<div class="note" style="margin-top:0">Все расчёты и таблицы носят справочный характер.</div>' +
         '<button class="btn ghost" type="button" data-go="sources">Источники данных</button>' +
+        '<button class="btn ghost" type="button" data-go="bug">Баг-репорт</button>' +
         '<button class="btn ghost" type="button" data-go="updates">Проверить обновления</button>' +
       '</div>' +
       '<div class="warn">Приложение не заменяет руководство по эксплуатации станка, паспорт изделия ' +

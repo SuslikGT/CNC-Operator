@@ -597,3 +597,16 @@ pre.code{font-size:clamp(11px, 3.2vw, 12.5px)}
 .scheme .barline{stroke:#8fb2c9; stroke-width:1.4}
 .scheme .bar-tick{stroke:#8fb2c9; stroke-width:1.4}
 .scheme .bar-text{fill:#8fb2c9; font-size:10px}
+
+/* ---------- баг-репорт ---------- */
+textarea.ta{
+  width:100%; min-height:126px; padding:12px 13px; border-radius:14px;
+  background:rgba(255,255,255,.045); border:1px solid var(--line); color:var(--tx);
+  font:inherit; font-size:15px; line-height:1.5; outline:none; resize:vertical;
+  transition:border-color .16s, box-shadow .16s;
+}
+textarea.ta:focus{
+  border-color:rgba(255,180,84,.75); background:rgba(255,180,84,.06);
+  box-shadow:0 0 0 3px rgba(255,180,84,.12);
+}
+textarea.ta::placeholder{color:#5b6a79}
