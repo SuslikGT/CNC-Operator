@@ -17,7 +17,7 @@ function appVersion(){
       if(n) return {name: n, code: Native.versionCode()};
     }
   }catch(e){}
-  return {name: '1.4', code: 5};
+  return {name: '1.5', code: 6};
 }
 function httpGetText(url){
   return new Promise(resolve => {
@@ -79,12 +79,12 @@ function renderStatus(html){ const st = $('up_status'); if(st) st.innerHTML = ht
 
 async function checkUpdates(silent){
   const cur = appVersion();
-  if(!silent) renderStatus('<div class="mini">Проверяю GitHub…</div>');
+  if(!silent) renderStatus('<div class="mini">Проверяю обновления…</div>');
   const body = await httpGetText(releaseUrl());
   lsSet(UPD_LAST_KEY, Date.now());
 
   if(!body){
-    if(!silent) renderStatus('<div class="warn">Нет связи с GitHub. Проверьте интернет — ' +
+    if(!silent) renderStatus('<div class="warn">Нет соединения. Проверьте интернет — ' +
       'остальные разделы работают офлайн.</div>');
     return;
   }
@@ -97,7 +97,7 @@ async function checkUpdates(silent){
     return;
   }
   if(rel.err){
-    if(!silent) renderStatus('<div class="warn">Не удалось разобрать ответ GitHub. Попробуйте позже.</div>');
+    if(!silent) renderStatus('<div class="warn">Сервер обновлений ответил ошибкой. Попробуйте позже.</div>');
     return;
   }
   const avail = isNewer(rel.version, cur.name);
@@ -108,7 +108,7 @@ async function checkUpdates(silent){
       (rel.notes ? '<div class="mini" style="margin-top:4px">' + esc(rel.notes).replace(/\n/g, '<br>') + '</div>' : '') +
       '<button class="btn pri" type="button" id="up_install" style="margin-top:10px">Скачать и установить</button></div>'
     : '<div class="note" style="margin-top:0">У вас последняя версия: <b>' + esc(cur.name) +
-      '</b>. Последний релиз на GitHub — ' + esc(rel.version) + '.</div>');
+      '</b>.</div>');
 
   const ib = $('up_install');
   if(ib) ib.addEventListener('click', doInstall);
@@ -148,10 +148,7 @@ SCREENS.updates = {
     const lastTxt = last ? new Date(last).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
     return '<div class="card">' +
         '<div class="kv"><span class="k">Установленная версия</span><span class="v">' + esc(cur.name) + '</span></div>' +
-        '<div class="kv"><span class="k">Источник обновлений</span><span class="v">' + esc(UPD_REPO) + '</span></div>' +
         '<div class="kv"><span class="k">Последняя проверка</span><span class="v">' + lastTxt + '</span></div>' +
-        '<div class="kv"><span class="k">Установка из источника</span><span class="v">' +
-          (can ? 'разрешена' : 'запрещена — включите в настройках') + '</span></div>' +
       '</div>' +
       '<div class="card">' +
         '<label class="switchrow"><span>Проверять при запуске</span>' +
@@ -159,19 +156,10 @@ SCREENS.updates = {
         '<button class="btn pri" type="button" id="up_check">Проверить обновления</button>' +
         '<div id="up_status" style="margin-top:10px"></div>' +
       '</div>' +
-      '<div class="note">Адрес зашит в приложении: <b>github.com/' + esc(UPD_REPO) + '</b>. ' +
-      'Прописывать ничего не нужно — при запуске приложение само смотрит последний релиз и, ' +
-      'если он новее установленной версии, показывает баннер и предлагает установку.</div>' +
-      '<div class="h">Как выходит новая версия</div>' +
-      '<div class="card"><ul class="list">' +
-        '<li>В репозитории создаётся релиз с тегом <b>v1.4</b>, <b>v1.5</b> и так далее.</li>' +
-        '<li>К релизу прикрепляется файл <b>.apk</b> — именно его скачивает приложение.</li>' +
-        '<li>Телефон сравнивает тег с установленной версией и предлагает обновление.</li>' +
-      '</ul>' +
-      '<div class="note">Если релиза ещё нет, приложение покажет «опубликованных релизов пока нет» ' +
-      'и повторит проверку при следующем запуске — ничего настраивать не надо.</div></div>' +
-      '<div class="warn">Приложение работает офлайн: сеть используется только для проверки версии ' +
-      'и загрузки APK. Системную установку вы подтверждаете вручную.</div>';
+      '<div class="note">Обновления проверяются автоматически при запуске. ' +
+      'Если выйдет новая версия, приложение предложит её установить.</div>' +
+      (can ? '' : '<div class="warn">Разрешите установку приложений из этого источника в настройках телефона, ' +
+        'иначе обновление не установится.</div>');
   },
   mount(){
     const au = $('up_auto');

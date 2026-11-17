@@ -14,7 +14,6 @@ SCREENS.about = {
           'рабочий справочник и калькуляторы оператора токарно-фрезерного центра</span></div>' +
         '<div class="kv"><span class="k">Станок</span><span class="v">Headman T65M II/750</span></div>' +
         '<div class="kv"><span class="k">Стойка</span><span class="v">SINUMERIK 828D</span></div>' +
-        '<div class="kv"><span class="k">Пакет</span><span class="v">ru.cnc.operator</span></div>' +
         '<div class="kv"><span class="k">Android</span><span class="v">7.0 и новее</span></div>' +
         '<div class="kv"><span class="k">Сеть</span><span class="v">только проверка обновлений</span></div>' +
       '</div>' +
@@ -30,12 +29,9 @@ SCREENS.about = {
         '<div class="kv"><span class="k">Автор и разработчик</span><span class="v"><b>SuslikGT</b></span></div>' +
         '<div class="kv"><span class="k">Год</span><span class="v">2026</span></div>' +
         '<div class="kv"><span class="k">Версия</span><span class="v">' + esc(v.name) + ' (' + esc(v.code) + ')</span></div>' +
-        '<div class="note">Приложение сделано как личный рабочий инструмент оператора. ' +
-        'Копирование и передача — по согласованию с автором.</div>' +
       '</div>' +
       '<div class="h">Данные</div><div class="card">' +
-        '<div class="note" style="margin-top:0">Все расчёты и таблицы носят справочный характер. ' +
-        'Полный список источников и нормативов — в отдельном разделе.</div>' +
+        '<div class="note" style="margin-top:0">Все расчёты и таблицы носят справочный характер.</div>' +
         '<button class="btn ghost" type="button" data-go="sources">Источники данных</button>' +
         '<button class="btn ghost" type="button" data-go="updates">Проверить обновления</button>' +
       '</div>' +
