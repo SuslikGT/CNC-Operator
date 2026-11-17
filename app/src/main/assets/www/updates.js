@@ -17,7 +17,7 @@ function appVersion(){
       if(n) return {name: n, code: Native.versionCode()};
     }
   }catch(e){}
-  return {name: '1.7', code: 8};
+  return {name: '1.8', code: 9};
 }
 function httpGetText(url){
   return new Promise(resolve => {
@@ -54,50 +54,54 @@ function esc(s){
 function releaseUrl(){
   return 'https://api.github.com/repos/' + UPD_REPO + '/releases/latest';
 }
-function parseRelease(text){
+function manifestUrl(){
+  return 'https://raw.githubusercontent.com/' + UPD_REPO + '/main/update.json';
+}
+function parseManifest(text){
   let j;
-  try{ j = JSON.parse(text); }catch(e){ return {err: 'badjson'}; }
-  if(j && j.message && !j.tag_name){
-    return {err: 'norelease', message: String(j.message)};
+  try{ j = JSON.parse(text); }catch(e){ return null; }
+  if(j && j.assets){
+    const apk = (j.assets || []).filter(a => /\.apk$/i.test(a.name || ''));
+    return {
+      version: String(j.tag_name || j.name || '').replace(/^v/i, ''),
+      url: apk.length ? apk[0].browser_download_url : '',
+      notes: String(j.body || '').slice(0, 700),
+      size: apk.length ? (apk[0].size || 0) : 0
+    };
   }
-  if(!j || !j.tag_name && !j.name){
-    return {err: 'norelease'};
+  if(j && (j.version || j.versionName) && (j.url || j.apk)){
+    return {
+      version: String(j.version || j.versionName),
+      url: String(j.url || j.apk),
+      notes: String(j.notes || '').slice(0, 700),
+      size: j.size || 0
+    };
   }
-  const apk = (j.assets || []).filter(a => /\.apk$/i.test(a.name || ''));
-  if(!apk.length){
-    return {err: 'noapk', version: String(j.tag_name || j.name || '').replace(/^v/i, '')};
-  }
-  return {
-    version: String(j.tag_name || j.name || '').replace(/^v/i, ''),
-    url: apk[0].browser_download_url,
-    notes: String(j.body || '').slice(0, 700),
-    size: apk[0].size || 0,
-    published: j.published_at || ''
-  };
+  return null;
 }
 function renderStatus(html){ const st = $('up_status'); if(st) st.innerHTML = html; }
 
 async function checkUpdates(silent){
   const cur = appVersion();
   if(!silent) renderStatus('<div class="mini">Проверяю обновления…</div>');
-  const body = await httpGetText(releaseUrl());
+  let rel = null, online = false;
+
+  const relBody = await httpGetText(releaseUrl());
+  if(relBody){ online = true; rel = parseManifest(relBody); }
+  if(!rel || !rel.url){
+    const manBody = await httpGetText(manifestUrl() + '?t=' + Date.now());
+    if(manBody){ online = true; const m = parseManifest(manBody); if(m && m.url) rel = m; }
+  }
   lsSet(UPD_LAST_KEY, Date.now());
 
-  if(!body){
+  if(!rel && !online){
     if(!silent) renderStatus('<div class="warn">Нет соединения. Проверьте интернет — ' +
       'остальные разделы работают офлайн.</div>');
     return;
   }
-  const rel = parseRelease(body);
-
-  if(rel.err === 'norelease' || rel.err === 'noapk'){
+  if(!rel || !rel.url){
     window.UPDATE = null;
-    renderStatus('<div class="note" style="margin-top:0">Установлена версия <b>' + esc(cur.name) +
-      '</b>. Опубликованных релизов пока нет — проверка повторится автоматически при следующем запуске.</div>');
-    return;
-  }
-  if(rel.err){
-    if(!silent) renderStatus('<div class="warn">Сервер обновлений ответил ошибкой. Попробуйте позже.</div>');
+    renderStatus('<div class="note" style="margin-top:0">У вас последняя версия: <b>' + esc(cur.name) + '</b>.</div>');
     return;
   }
   const avail = isNewer(rel.version, cur.name);
