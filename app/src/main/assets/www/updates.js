@@ -17,7 +17,7 @@ function appVersion(){
       if(n) return {name: n, code: Native.versionCode()};
     }
   }catch(e){}
-  return {name: '1.8', code: 9};
+  return {name: '1.9', code: 10};
 }
 function httpGetText(url){
   return new Promise(resolve => {

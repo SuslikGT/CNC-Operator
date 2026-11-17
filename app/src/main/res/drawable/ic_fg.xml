@@ -7,33 +7,40 @@
     android:viewportHeight="108">
 
     <path
-        android:pathData="M54,30 A24,24 0 1,1 54,78 A24,24 0 1,1 54,30 Z"
-        android:strokeWidth="8.5"
-        android:strokeLineCap="round">
-        <aapt:attr name="android:strokeColor">
+        android:pathData="M42,24 A24,24 0 1,1 42,72 A24,24 0 1,1 42,24 Z M42,41.5 A6.5,6.5 0 1,1 42,54.5 A6.5,6.5 0 1,1 42,41.5 Z"
+        android:fillType="evenOdd">
+        <aapt:attr name="android:fillColor">
             <gradient
                 android:type="linear"
-                android:startX="30"
-                android:startY="78"
-                android:endX="78"
-                android:endY="30">
+                android:startX="16" android:startY="92"
+                android:endX="94" android:endY="16">
                 <item android:offset="0" android:color="#FFFF8A2B" />
                 <item android:offset="1" android:color="#FFFFC873" />
             </gradient>
         </aapt:attr>
     </path>
 
+    <path android:pathData="M66,48 L90,36 L90,60 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="60" android:startY="64"
+                android:endX="92" android:endY="32">
+                <item android:offset="0" android:color="#FF8EA0B2" />
+                <item android:offset="1" android:color="#FFE6EEF6" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
     <path
-        android:pathData="M35,73 L73,35"
-        android:strokeWidth="8.5"
+        android:pathData="M60,26 C68,16 82,20 80,30"
+        android:strokeWidth="6"
         android:strokeLineCap="round">
         <aapt:attr name="android:strokeColor">
             <gradient
                 android:type="linear"
-                android:startX="30"
-                android:startY="78"
-                android:endX="78"
-                android:endY="30">
+                android:startX="16" android:startY="92"
+                android:endX="94" android:endY="16">
                 <item android:offset="0" android:color="#FFFF8A2B" />
                 <item android:offset="1" android:color="#FFFFC873" />
             </gradient>
