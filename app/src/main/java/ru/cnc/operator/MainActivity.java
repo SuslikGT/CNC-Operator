@@ -166,8 +166,8 @@ public class MainActivity extends Activity {
                         c.setRequestProperty("Accept", "application/json, text/plain, */*");
                         c.setRequestProperty("User-Agent", "CNCOperator");
                         int code = c.getResponseCode();
-                        if (code >= 200 && code < 400) {
-                            InputStream is = c.getInputStream();
+                        InputStream is = (code >= 200 && code < 400) ? c.getInputStream() : c.getErrorStream();
+                        if (is != null) {
                             ByteArrayOutputStream bo = new ByteArrayOutputStream();
                             byte[] buf = new byte[8192];
                             int n;

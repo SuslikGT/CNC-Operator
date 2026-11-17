@@ -1,4 +1,4 @@
-/* Обновления: проверка версии, скачивание APK, GitHub Releases / Obtainium */
+/* Обновления: репозиторий зашит в приложении, настраивать ничего не нужно */
 window.__cb = window.__cb || {};
 window.__nativeHttp = function(cbId, body){
   const fn = window.__cb[cbId];
@@ -6,9 +6,9 @@ window.__nativeHttp = function(cbId, body){
 };
 window.UPDATE = null;
 
-const UPD_URL_KEY = 'upd.url';
+const UPD_REPO = 'SuslikGT/CNC-Operator';
 const UPD_AUTO_KEY = 'upd.auto';
-const UPD_DEFAULT = 'SuslikGT/CNC-Operator';
+const UPD_LAST_KEY = 'upd.last';
 
 function appVersion(){
   try{
@@ -17,7 +17,7 @@ function appVersion(){
       if(n) return {name: n, code: Native.versionCode()};
     }
   }catch(e){}
-  return {name: '1.3', code: 4};
+  return {name: '1.4', code: 5};
 }
 function httpGetText(url){
   return new Promise(resolve => {
@@ -51,70 +51,70 @@ function esc(s){
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-function updSourceUrl(raw){
-  let s = String(raw || '').trim();
-  if(!s) return '';
-  if(/^https?:\/\//i.test(s)) return s;
-  if(/^[\w.\-]+\/[\w.\-]+$/.test(s)) return 'https://api.github.com/repos/' + s + '/releases/latest';
-  return '';
+function releaseUrl(){
+  return 'https://api.github.com/repos/' + UPD_REPO + '/releases/latest';
 }
-function parseUpdate(text, src){
+function parseRelease(text){
   let j;
-  try{ j = JSON.parse(text); }catch(e){ return null; }
-  if(j && j.assets && j.assets.length){
-    const apk = j.assets.filter(a => /\.apk$/i.test(a.name || ''));
-    if(!apk.length) return null;
-    const a = apk[0];
-    return {
-      version: String(j.tag_name || j.name || '').replace(/^v/i, ''),
-      url: a.browser_download_url,
-      notes: String(j.body || '').slice(0, 600),
-      size: a.size
-    };
+  try{ j = JSON.parse(text); }catch(e){ return {err: 'badjson'}; }
+  if(j && j.message && !j.tag_name){
+    return {err: 'norelease', message: String(j.message)};
   }
-  if(j && (j.version || j.versionName) && (j.url || j.apk)){
-    return {
-      version: String(j.version || j.versionName),
-      url: String(j.url || j.apk),
-      notes: String(j.notes || j.changelog || '').slice(0, 600),
-      size: j.size || 0
-    };
+  if(!j || !j.tag_name && !j.name){
+    return {err: 'norelease'};
   }
-  return null;
+  const apk = (j.assets || []).filter(a => /\.apk$/i.test(a.name || ''));
+  if(!apk.length){
+    return {err: 'noapk', version: String(j.tag_name || j.name || '').replace(/^v/i, '')};
+  }
+  return {
+    version: String(j.tag_name || j.name || '').replace(/^v/i, ''),
+    url: apk[0].browser_download_url,
+    notes: String(j.body || '').slice(0, 700),
+    size: apk[0].size || 0,
+    published: j.published_at || ''
+  };
 }
+function renderStatus(html){ const st = $('up_status'); if(st) st.innerHTML = html; }
 
 async function checkUpdates(silent){
-  const src = updSourceUrl(lsGet(UPD_URL_KEY, UPD_DEFAULT));
-  const st = $('up_status');
   const cur = appVersion();
-  if(!src){
-    if(st) st.innerHTML = '<div class="warn">Адрес не задан: укажите ссылку на JSON или <b>пользователь/репозиторий</b> GitHub.</div>';
-    return;
-  }
-  if(st && !silent) st.innerHTML = '<div class="mini">Проверяю…</div>';
-  const body = await httpGetText(src);
+  if(!silent) renderStatus('<div class="mini">Проверяю GitHub…</div>');
+  const body = await httpGetText(releaseUrl());
+  lsSet(UPD_LAST_KEY, Date.now());
+
   if(!body){
-    if(st) st.innerHTML = '<div class="warn">Не удалось получить данные. Проверьте интернет и адрес источника.</div>';
+    if(!silent) renderStatus('<div class="warn">Нет связи с GitHub. Проверьте интернет — ' +
+      'остальные разделы работают офлайн.</div>');
     return;
   }
-  const rel = parseUpdate(body, src);
-  if(!rel || !rel.url){
-    if(st) st.innerHTML = '<div class="warn">Ответ получен, но разобрать его не удалось. Нужен релиз GitHub с APK или JSON вида <b>{"version":"1.2","url":"…apk"}</b>.</div>';
+  const rel = parseRelease(body);
+
+  if(rel.err === 'norelease' || rel.err === 'noapk'){
+    window.UPDATE = null;
+    renderStatus('<div class="note" style="margin-top:0">Установлена версия <b>' + esc(cur.name) +
+      '</b>. Опубликованных релизов пока нет — проверка повторится автоматически при следующем запуске.</div>');
+    return;
+  }
+  if(rel.err){
+    if(!silent) renderStatus('<div class="warn">Не удалось разобрать ответ GitHub. Попробуйте позже.</div>');
     return;
   }
   const avail = isNewer(rel.version, cur.name);
   window.UPDATE = avail ? rel : null;
-  if(st){
-    st.innerHTML = avail
-      ? '<div class="upd-new"><div class="upd-v">Доступна версия ' + esc(rel.version) + '</div>' +
-        (rel.notes ? '<div class="mini" style="margin-top:4px">' + esc(rel.notes).replace(/\n/g, '<br>') + '</div>' : '') +
-        '<button class="btn pri" type="button" id="up_install" style="margin-top:10px">Скачать и установить</button></div>'
-      : '<div class="note" style="margin-top:0">Установлена последняя версия: <b>' + esc(cur.name) + '</b></div>';
-    const ib = $('up_install');
-    if(ib) ib.addEventListener('click', doInstall);
-  }
+
+  renderStatus(avail
+    ? '<div class="upd-new"><div class="upd-v">Доступна версия ' + esc(rel.version) + '</div>' +
+      (rel.notes ? '<div class="mini" style="margin-top:4px">' + esc(rel.notes).replace(/\n/g, '<br>') + '</div>' : '') +
+      '<button class="btn pri" type="button" id="up_install" style="margin-top:10px">Скачать и установить</button></div>'
+    : '<div class="note" style="margin-top:0">У вас последняя версия: <b>' + esc(cur.name) +
+      '</b>. Последний релиз на GitHub — ' + esc(rel.version) + '.</div>');
+
+  const ib = $('up_install');
+  if(ib) ib.addEventListener('click', doInstall);
   if(avail && silent) toast('Доступно обновление ' + rel.version);
 }
+
 function doInstall(){
   const u = window.UPDATE;
   if(!u || !u.url){ toast('Нет ссылки на файл'); return; }
@@ -142,65 +142,53 @@ SCREENS.updates = {
   title: 'Обновления',
   render(){
     const cur = appVersion();
-    const url = lsGet(UPD_URL_KEY, UPD_DEFAULT);
     const auto = lsGet(UPD_AUTO_KEY, true);
     const can = (window.Native && Native.canInstall) ? Native.canInstall() : true;
+    const last = lsGet(UPD_LAST_KEY, 0);
+    const lastTxt = last ? new Date(last).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : '—';
     return '<div class="card">' +
         '<div class="kv"><span class="k">Установленная версия</span><span class="v">' + esc(cur.name) + '</span></div>' +
-        '<div class="kv"><span class="k">Сборка</span><span class="v">' + esc(cur.code) + '</span></div>' +
+        '<div class="kv"><span class="k">Источник обновлений</span><span class="v">' + esc(UPD_REPO) + '</span></div>' +
+        '<div class="kv"><span class="k">Последняя проверка</span><span class="v">' + lastTxt + '</span></div>' +
         '<div class="kv"><span class="k">Установка из источника</span><span class="v">' +
           (can ? 'разрешена' : 'запрещена — включите в настройках') + '</span></div>' +
       '</div>' +
-      '<div class="h">Источник обновлений</div>' +
       '<div class="card">' +
-        fld('up_url', 'Ссылка на JSON или GitHub «пользователь/репозиторий»', url,
-          '', {ph: 'ivan/cnc-operator', text: true}) +
         '<label class="switchrow"><span>Проверять при запуске</span>' +
           '<span class="switch"><input type="checkbox" id="up_auto"' + (auto ? ' checked' : '') + '><i></i></span></label>' +
         '<button class="btn pri" type="button" id="up_check">Проверить обновления</button>' +
         '<div id="up_status" style="margin-top:10px"></div>' +
       '</div>' +
-      '<div class="h">Как это настроить</div>' +
+      '<div class="note">Адрес зашит в приложении: <b>github.com/' + esc(UPD_REPO) + '</b>. ' +
+      'Прописывать ничего не нужно — при запуске приложение само смотрит последний релиз и, ' +
+      'если он новее установленной версии, показывает баннер и предлагает установку.</div>' +
+      '<div class="h">Как выходит новая версия</div>' +
       '<div class="card"><ul class="list">' +
-        '<li><b>GitHub (рекомендуется)</b>: создайте публичный репозиторий, затем Releases → New release, ' +
-        'тег <b>v1.2</b> и прикрепите файл <b>app-release.apk</b>. В поле выше впишите «логин/репозиторий».</li>' +
-        '<li><b>Свой JSON</b>: разместите файл и рядом APK, укажите ссылку на JSON.</li>' +
-        '<li><b>Obtainium</b>: установите его и добавьте ссылку на страницу релизов репозитория — ' +
-        'он сам будет проверять обновления и предлагать установку.</li>' +
-        '<li>После публикации нажмите «Проверить обновления» — приложение скачает APK и откроет установщик.</li>' +
+        '<li>В репозитории создаётся релиз с тегом <b>v1.4</b>, <b>v1.5</b> и так далее.</li>' +
+        '<li>К релизу прикрепляется файл <b>.apk</b> — именно его скачивает приложение.</li>' +
+        '<li>Телефон сравнивает тег с установленной версией и предлагает обновление.</li>' +
       '</ul>' +
-      '<pre class="code">{\n  "version": "1.2",\n  "url": "https://example.com/cnc-1.2.apk",\n' +
-      '  "notes": "Добавлен расчёт ..."\n}</pre>' +
-      '</div>' +
-      '<div class="warn">Приложение работает офлайн: сеть используется только для этой проверки. ' +
-      'Установку система всегда подтверждает вручную — обойти это без MDM нельзя.</div>';
+      '<div class="note">Если релиза ещё нет, приложение покажет «опубликованных релизов пока нет» ' +
+      'и повторит проверку при следующем запуске — ничего настраивать не надо.</div></div>' +
+      '<div class="warn">Приложение работает офлайн: сеть используется только для проверки версии ' +
+      'и загрузки APK. Системную установку вы подтверждаете вручную.</div>';
   },
   mount(){
-    const inp = $('up_url');
-    if(inp){
-      inp.setAttribute('data-nosave', '1');
-      inp.addEventListener('change', () => {
-        lsSet(UPD_URL_KEY, inp.value.trim());
-        toast('Источник сохранён');
-      });
-      inp.addEventListener('blur', () => lsSet(UPD_URL_KEY, inp.value.trim()));
-    }
     const au = $('up_auto');
     if(au) au.addEventListener('change', () => lsSet(UPD_AUTO_KEY, au.checked));
     const btn = $('up_check');
-    if(btn) btn.addEventListener('click', () => {
-      lsSet(UPD_URL_KEY, val('up_url').trim());
-      checkUpdates(false);
-    });
+    if(btn) btn.addEventListener('click', () => checkUpdates(false));
     if(window.UPDATE){
-      const st = $('up_status');
-      if(st) st.innerHTML = '<div class="upd-new"><div class="upd-v">Доступна версия ' + esc(window.UPDATE.version) +
-        '</div><button class="btn pri" type="button" id="up_install" style="margin-top:10px">Скачать и установить</button></div>';
+      renderStatus('<div class="upd-new"><div class="upd-v">Доступна версия ' + esc(window.UPDATE.version) +
+        '</div><button class="btn pri" type="button" id="up_install" style="margin-top:10px">Скачать и установить</button></div>');
       const ib = $('up_install');
       if(ib) ib.addEventListener('click', doInstall);
+    } else {
+      renderStatus('<div class="mini">Нажмите «Проверить обновления» или подождите автопроверки.</div>');
     }
   }
 };
 window.updatesInit = function(){
-  if(lsGet(UPD_AUTO_KEY, true)) setTimeout(() => checkUpdates(true), 1200);
+  if(!lsGet(UPD_AUTO_KEY, true)) return;
+  setTimeout(() => { checkUpdates(true); }, 1200);
 };
