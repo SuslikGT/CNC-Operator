@@ -5,11 +5,17 @@ SCREENS.metals = {
     return '<div class="card"><div class="search"><input class="inp" id="mt_q" type="text" autocomplete="off" ' +
       'placeholder="30ХГСА, 12Х18Н10Т, чугун…"></div>' +
       '<div class="note" style="margin-top:0">Можно искать по марке, группе или применению.</div></div>' +
-      '<div class="h">Что значат буквы</div><div class="card">' +
+      '<button class="collapse-head" type="button" data-collapse="mt_letters" aria-expanded="false">' +
+        '<span>Что значат буквы</span>' +
+        '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>' +
+      '</button>' +
+      '<div class="collapse-body" id="mt_letters">' +
+      '<div class="card">' +
       D.letterCodes.map(r => '<div class="kv"><span class="k"><b>' + r[0] + '</b></span><span class="v">' +
         r[1] + '</span></div>').join('') +
       '<div class="note">Цифры в начале марки — среднее содержание углерода в сотых долях процента: ' +
       '<b>45</b> = 0,45 % C, <b>30ХГСА</b> = ~0,30 % C. У инструментальных — в десятых: <b>У8</b> = 0,8 % C.</div></div>' +
+      '</div>' +
       '<div class="h">Марки</div><div id="mt_list"></div>' +
       '<div class="note">Состав приведён по ГОСТ (средние диапазоны) и предназначен для ориентира. ' +
       'Для точных расчётов и сертификации используйте ГОСТ 4543, 5632, 1050 и сертификат на партию.</div>';

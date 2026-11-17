@@ -82,7 +82,7 @@ function thCalc(){
   const drill = d - P;
   const vc = num('th_vc', 10);
   const sv = $('th_svg');
-  if(sv) sv.innerHTML = svgThread(d, P);
+  if(sv) animScheme('thread', sv, [d, P], renderThread);
   const n = Math.round(1000 * vc / (Math.PI * d));
   const depth = h3;
   const cut = num('th_cut', 0.1);

@@ -64,6 +64,33 @@ function table(head, rows, cls){
   return h + '</table></div>';
 }
 
+/* ---------- сворачиваемые блоки ---------- */
+function collapseKey(id){ return 'ui.collapse.' + id; }
+function setCollapse(id, open, head){
+  const body = $(id);
+  if(!body) return;
+  const h = head || document.querySelector('[data-collapse="' + id + '"]');
+  body.classList.toggle('open', open);
+  if(h){
+    h.classList.toggle('open', open);
+    h.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  if(open){
+    body.style.maxHeight = body.scrollHeight + 'px';
+    setTimeout(() => { if(body.classList.contains('open')) body.style.maxHeight = 'none'; }, 360);
+  } else {
+    if(getComputedStyle(body).maxHeight === 'none') body.style.maxHeight = body.scrollHeight + 'px';
+    requestAnimationFrame(() => { body.style.maxHeight = '0px'; });
+  }
+  lsSet(collapseKey(id), open);
+}
+function restoreCollapse(){
+  $$('[data-collapse]').forEach(h => {
+    const id = h.dataset.collapse;
+    if(lsGet(collapseKey(id), false)) setCollapse(id, true, h);
+  });
+}
+
 /* ---------- навигация ---------- */
 let stack = [];
 let navDir = 'home';
@@ -121,6 +148,7 @@ function paint(){
   view.innerHTML = sc.render(cur.p);
   restoreInputs(cur.id);
   if(sc.mount) sc.mount(cur.p);
+  restoreCollapse();
   requestAnimationFrame(() => animateResults(view));
 }
 
@@ -250,6 +278,12 @@ function start(){
     if(b){ go(b.dataset.go); return; }
     const act = e.target.closest('[data-act]');
     if(act && window.ACT && ACT[act.dataset.act]){ ACT[act.dataset.act](act); }
+  });
+  document.addEventListener('click', e => {
+    const h = e.target.closest('[data-collapse]');
+    if(!h) return;
+    const body = $(h.dataset.collapse);
+    setCollapse(h.dataset.collapse, !(body && body.classList.contains('open')), h);
   });
   document.addEventListener('click', e => {
     const el = e.target.closest('input,select,textarea');

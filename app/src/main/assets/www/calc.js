@@ -252,7 +252,7 @@ function geoCalc(){
   /* фаска */
   const Dm = num('ge_d', 0), c = num('ge_c', 0), a = num('ge_a', 45);
   const s1 = $('ge_svg1');
-  if(s1) s1.innerHTML = svgChamfer(Dm, c, a);
+  if(s1) animScheme('chamfer', s1, [Dm, c, a], renderChamfer);
   const o1 = $('ge_out1');
   if(o1){
     if(Dm > 0 && c > 0 && a > 0){
@@ -269,7 +269,7 @@ function geoCalc(){
   /* конус */
   const d1 = num('gc_d1', 0), d2 = num('gc_d2', 0), L = num('gc_l', 0);
   const s2 = $('ge_svg2');
-  if(s2) s2.innerHTML = svgCone(d1, d2, L);
+  if(s2) animScheme('cone', s2, [d1, d2, L], renderCone);
   const o2 = $('ge_out2');
   if(o2){
     if(d1 > 0 && L > 0){
@@ -285,7 +285,7 @@ function geoCalc(){
   /* галтель */
   const r = num('gg_r', 0), ang = num('gg_a', 90);
   const s3 = $('ge_svg3');
-  if(s3) s3.innerHTML = svgFillet(r);
+  if(s3) animScheme('fillet', s3, [r], renderFillet);
   const o3 = $('ge_out3');
   if(o3){
     if(r > 0){
