@@ -11,3 +11,4 @@ captures/
 .externalNativeBuild/
 *.apk
 *.ap_
+*.bak
