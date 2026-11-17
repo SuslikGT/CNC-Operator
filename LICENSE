@@ -1,21 +1,107 @@
-MIT License
+ПРОПРИЕТАРНАЯ ЛИЦЕНЗИЯ / PROPRIETARY LICENSE
 
-Copyright (c) 2026 SuslikGT
+Copyright (c) 2026 SuslikGT. Все права защищены / All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Настоящая лицензия распространяется на приложение «ЧПУ Оператор» (далее — «Приложение»):
+исходный код, разметку, стили, скрипты, схемы, справочные данные, тексты, изображения,
+значки, документацию, а также собранные файлы установки (APK) и иные материалы
+репозитория SuslikGT/CNC-Operator.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. ПРЕДОСТАВЛЯЕМЫЕ ПРАВА
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+1.1. Автор предоставляет любому лицу ограниченное, неисключительное, непередаваемое
+и отзывное право бесплатно установить и использовать готовое Приложение, полученное
+из официального источника (репозиторий SuslikGT/CNC-Operator или его раздел Releases),
+в личных некоммерческих целях на принадлежащих этому лицу устройствах.
+
+1.2. Никакие иные права не предоставляются. Все права, прямо не предоставленные
+в пункте 1.1, сохраняются за автором.
+
+2. ЗАПРЕЩЁННЫЕ ДЕЙСТВИЯ
+
+Без предварительного письменного разрешения автора запрещается:
+
+2.1. Копировать, воспроизводить, загружать для последующего распространения,
+публиковать, распространять, передавать, продавать, сдавать в аренду или иным образом
+предоставлять Приложение или его части третьим лицам, в том числе в виде сборок,
+архивов, зеркал репозитория или в составе других продуктов.
+
+2.2. Изменять, перерабатывать, адаптировать, переводить, декомпилировать,
+дизассемблировать, распаковывать, извлекать ресурсы и исходный код, а также создавать
+производные произведения на основе Приложения или его частей — в той мере, в какой
+такие действия не разрешены императивными нормами применимого права.
+
+2.3. Использовать Приложение или его части в коммерческих целях: в составе платных
+продуктов и услуг, для обучения с оплатой, для сопровождения продаж оборудования
+или иной коммерческой деятельности, а также в собственных проектах и приложениях.
+
+2.4. Переносить, копировать или использовать справочные таблицы, расчётные формулы,
+схемы, тексты и элементы оформления Приложения в иных программах, документах,
+на сайтах и в публикациях.
+
+2.5. Удалять, скрывать или изменять уведомления об авторских правах, наименование
+Приложения, указание автора, а также выдавать Приложение за собственное произведение.
+
+2.6. Использовать наименование «ЧПУ Оператор», имя автора, логотип и значок
+Приложения в рекламе, названиях проектов и иных целях без разрешения.
+
+2.7. Обходить или изменять механизм проверки обновлений, подменять файлы обновлений
+и распространять изменённые сборки под тем же наименованием.
+
+3. ОТСУТСТВИЕ ГАРАНТИЙ
+
+3.1. Приложение предоставляется «как есть» (AS IS), без гарантий любого рода,
+явных или подразумеваемых, включая гарантии пригодности для конкретных целей
+и отсутствия ошибок.
+
+3.2. Приложение является справочным инструментом. Автор не несёт ответственности
+за выбранные режимы обработки, качество деталей, поломку инструмента, повреждение
+оборудования, травмы и любой иной ущерб, возникший в результате использования
+или невозможности использования Приложения. Ответственность за безопасность работ
+несёт оператор и владелец оборудования.
+
+3.3. В максимальной степени, допускаемой применимым правом, автор не возмещает
+убытки, включая упущенную выгоду и косвенные потери.
+
+4. ПРЕКРАЩЕНИЕ
+
+4.1. Права, предоставленные пунктом 1.1, прекращаются автоматически при нарушении
+любого условия настоящей лицензии.
+
+4.2. При прекращении действия лицензии лицо обязано прекратить использование
+Приложения и удалить все имеющиеся копии, включая сборки и производные материалы.
+
+5. РАЗРЕШЕНИЯ И ОБРАЩЕНИЯ
+
+5.1. Запрос на копирование, изменение, распространение, коммерческое использование
+или публикацию материалов направляется автору через раздел Issues репозитория
+https://github.com/SuslikGT/CNC-Operator либо по контакту, указанному в профиле автора.
+Разрешение считается действительным только в письменной форме.
+
+5.2. Условия, согласованные в письменном разрешении, имеют приоритет над настоящей
+лицензией в соответствующей части.
+
+6. ПРИМЕНИМОЕ ПРАВО
+
+6.1. К настоящей лицензии применяется право Российской Федерации.
+
+6.2. Если какое-либо положение будет признано недействительным, остальные положения
+сохраняют силу.
+
+---
+
+PROPRIETARY LICENSE (English notice)
+
+Copyright (c) 2026 SuslikGT. All rights reserved.
+
+The application "ЧПУ Оператор" (CNC Operator), including its source code, assets,
+reference data, documentation and installation packages, is proprietary software.
+You may install and use the published application free of charge for personal,
+non-commercial purposes only. Copying, modifying, redistributing, publishing,
+sublicensing, selling, reverse engineering (except where mandatory law allows),
+or using the code, data, formulas and design in other products is prohibited
+without prior written permission from the author. The software is provided
+"as is", without warranty of any kind, and the author accepts no liability
+for any damage arising from its use. Rights terminate automatically upon breach.
+Permission requests: https://github.com/SuslikGT/CNC-Operator (Issues).
+Governing law: Russian Federation.
