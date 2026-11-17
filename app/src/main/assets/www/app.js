@@ -291,6 +291,7 @@ function start(){
   });
   homeNav();
   if(typeof window.updatesInit === 'function') window.updatesInit();
+  if(typeof window.bugQueueInit === 'function') window.bugQueueInit();
 }
 window.appBack = function(){
   if(stack.length > 0){ backNav(); return true; }

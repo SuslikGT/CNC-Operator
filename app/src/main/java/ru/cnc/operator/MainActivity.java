@@ -224,8 +224,58 @@ public class MainActivity extends Activity {
             }).start();
         }
 
-        /** Качает APK системным загрузчиком и открывает установщик по завершении. */
+        /** POST JSON: результат отдаём в window.__nativeHttp(cbId, body). */
         @JavascriptInterface
+        public void httpPost(final String url, final String json, final String cbId) {
+            new Thread(new Runnable() {
+                @Override public void run() {
+                    String body = "";
+                    HttpURLConnection c = null;
+                    try {
+                        c = (HttpURLConnection) new URL(url).openConnection();
+                        c.setRequestMethod("POST");
+                        c.setConnectTimeout(10000);
+                        c.setReadTimeout(10000);
+                        c.setDoOutput(true);
+                        c.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+                        c.setRequestProperty("Accept", "application/json");
+                        c.setRequestProperty("User-Agent", "CNCOperator");
+                        c.setRequestProperty("Origin", "https://suslikgt.github.io");
+                        c.setRequestProperty("Referer", "https://suslikgt.github.io/");
+                        byte[] data = json.getBytes("UTF-8");
+                        c.setFixedLengthStreamingMode(data.length);
+                        java.io.OutputStream os = c.getOutputStream();
+                        os.write(data);
+                        os.flush();
+                        os.close();
+                        int code = c.getResponseCode();
+                        InputStream is = (code >= 200 && code < 400) ? c.getInputStream() : c.getErrorStream();
+                        if (is != null) {
+                            ByteArrayOutputStream bo = new ByteArrayOutputStream();
+                            byte[] buf = new byte[8192];
+                            int n;
+                            while ((n = is.read(buf)) > 0) bo.write(buf, 0, n);
+                            body = bo.toString("UTF-8");
+                        }
+                    } catch (Exception ignored) {
+                    } finally {
+                        if (c != null) c.disconnect();
+                    }
+                    final String out = body;
+                    runOnUiThread(new Runnable() {
+                        @Override public void run() {
+                            try {
+                                web.evaluateJavascript(
+                                        "window.__nativeHttp && window.__nativeHttp(" + JSONObject.quote(cbId) + "," +
+                                                JSONObject.quote(out) + ")", null);
+                            } catch (Exception ignored) {}
+                        }
+                    });
+                }
+            }).start();
+        }
+
+        /** Качает APK системным загрузчиком и открывает установщик по завершении. */        @JavascriptInterface
         public void installUpdate(final String url, final String title) {
             runOnUiThread(new Runnable() {
                 @Override public void run() {

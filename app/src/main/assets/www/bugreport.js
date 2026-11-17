@@ -1,6 +1,9 @@
-/* Баг-репорт */
+/* Баг-репорт: отправка на почту через FormSubmit + офлайн-очередь */
+const BUG_EMAIL = 'suslikkozber@gmail.com';
+const BUG_ENDPOINT = 'https://formsubmit.co/ajax/' + BUG_EMAIL;
 const BUG_REPO = 'SuslikGT/CNC-Operator';
 const BUG_KEY = 'bugreports';
+const BUG_QUEUE = 'bugqueue';
 
 function openExternal(url){
   try{
@@ -23,33 +26,104 @@ function deviceInfo(){
 function bugTypeLabel(t){
   return t === 'idea' ? 'Идея' : t === 'question' ? 'Вопрос' : 'Ошибка';
 }
+function bugStamp(){
+  return new Date().toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+}
+function bugPayload(type, text, contact){
+  const d = deviceInfo();
+  return {
+    name: 'ЧПУ Оператор',
+    'Тип': bugTypeLabel(type),
+    'Текст': text.trim(),
+    'Контакт': contact || '—',
+    'Версия': d.version.name + ' (' + d.version.code + ')',
+    'Устройство': 'Android ' + d.android + (d.model ? ', ' + d.model : ''),
+    'Экран': d.screen + ' ×' + d.dpr,
+    'Дата': bugStamp(),
+    '_subject': 'ЧПУ Оператор: баг-репорт',
+    '_template': 'table',
+    '_captcha': 'false'
+  };
+}
 function bugBody(type, text, contact){
   const d = deviceInfo();
-  const dt = new Date().toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
   return '### ' + bugTypeLabel(type) + '\n\n' + text.trim() +
     '\n\n---\n' +
     '**Версия:** ' + d.version.name + ' (' + d.version.code + ')\n' +
     '**Устройство:** Android ' + d.android + (d.model ? ', ' + d.model : '') + '\n' +
     '**Экран:** ' + d.screen + ' (×' + d.dpr + ')\n' +
-    '**Дата:** ' + dt + '\n' +
+    '**Дата:** ' + bugStamp() + '\n' +
     (contact ? '**Связь:** ' + contact + '\n' : '');
 }
-function bugIssueUrl(type, text, contact){
-  const body = bugBody(type, text, contact);
-  const first = text.trim().split('\n')[0].slice(0, 60);
-  const title = '[' + bugTypeLabel(type) + '] ' + (first || 'без описания');
-  return 'https://github.com/' + BUG_REPO + '/issues/new?title=' +
-    encodeURIComponent(title) + '&body=' + encodeURIComponent(body.slice(0, 5000));
+
+function postJson(url, obj){
+  return new Promise(resolve => {
+    const body = JSON.stringify(obj);
+    if(window.Native && Native.httpPost){
+      const id = 'pb' + Date.now() + Math.floor(Math.random() * 10000);
+      window.__cb[id] = resolve;
+      try{ Native.httpPost(url, body, id); }catch(e){ delete window.__cb[id]; resolve(''); return; }
+      setTimeout(() => {
+        if(window.__cb[id]){ delete window.__cb[id]; resolve(''); }
+      }, 15000);
+    } else {
+      fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+        body: body
+      }).then(r => r.text()).then(resolve).catch(() => resolve(''));
+    }
+  });
+}
+async function sendReport(type, text, contact){
+  const raw = await postJson(BUG_ENDPOINT, bugPayload(type, text, contact));
+  if(!raw) return {ok: false, reason: 'net'};
+  try{
+    const j = JSON.parse(raw);
+    if(String(j.success) === 'true') return {ok: true};
+    return {ok: false, reason: 'server', message: j.message || ''};
+  }catch(e){
+    return {ok: false, reason: 'server'};
+  }
 }
 function bugSave(type, text, sent){
   const list = lsGet(BUG_KEY, []);
   list.unshift({id: Date.now(), t: Date.now(), type: type, text: text, sent: !!sent});
   lsSet(BUG_KEY, list.slice(0, 30));
 }
+function queueAdd(type, text, contact){
+  const q = lsGet(BUG_QUEUE, []);
+  q.unshift({id: Date.now(), t: Date.now(), type: type, text: text, contact: contact || ''});
+  lsSet(BUG_QUEUE, q.slice(0, 20));
+}
+function queueSet(list){ lsSet(BUG_QUEUE, list); }
+async function bugQueueFlush(){
+  const q = lsGet(BUG_QUEUE, []);
+  if(!q.length) return;
+  const left = [];
+  for(let i = 0; i < q.length && i < 5; i++){
+    const it = q[i];
+    const res = await sendReport(it.type, it.text, it.contact);
+    if(res.ok){ bugSave(it.type, it.text, true); }
+    else if(res.reason === 'net'){ left.push(it); }
+    else { bugSave(it.type, it.text, false); }
+  }
+  for(let i = 5; i < q.length; i++) left.push(q[i]);
+  queueSet(left);
+  if(!left.length) toast('Отложенные отчёты отправлены');
+}
+window.bugQueueInit = function(){ setTimeout(bugQueueFlush, 2500); };
+
 function bugList(){
   const list = lsGet(BUG_KEY, []);
-  if(!list.length) return '<div class="empty">Отчётов пока нет</div>';
-  return list.map(r => {
+  const q = lsGet(BUG_QUEUE, []);
+  let out = '';
+  if(q.length){
+    out += '<div class="card"><div style="font-weight:600">В очереди: ' + q.length + '</div>' +
+      '<div class="mini" style="margin-top:4px">Уйдут при следующем запуске с интернетом</div></div>';
+  }
+  if(!list.length && !q.length) return '<div class="empty">Отчётов пока нет</div>';
+  out += list.map(r => {
     const d = new Date(r.t);
     const dt = d.toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
     return '<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">' +
@@ -57,8 +131,9 @@ function bugList(){
       '<div class="mini" style="margin-top:4px;white-space:pre-wrap">' + esc(r.text.slice(0, 400)) + '</div></div>' +
       '<button class="del" type="button" data-bugdel="' + r.id + '">×</button></div>' +
       '<div class="mini" style="margin-top:6px;color:' + (r.sent ? '#4ad991' : '#8496a8') + '">' +
-      (r.sent ? 'отправлено' : 'сохранено локально') + '</div></div>';
+      (r.sent ? 'отправлено' : 'не отправлено') + '</div></div>';
   }).join('');
+  return out;
 }
 
 SCREENS.bug = {
@@ -73,35 +148,56 @@ SCREENS.bug = {
           '<textarea class="inp ta" id="br_text" rows="5" placeholder="Что делали, что произошло и что ожидали. Чем подробнее — тем быстрее исправим."></textarea>' +
         '</label>' +
         fld('br_contact', 'Контакт для ответа (необязательно)', '', '', {ph: 'почта или @ник', text: true}) +
-        '<button class="btn pri" type="button" id="br_send">Отправить отчёт</button>' +
+        '<button class="btn pri" type="button" id="br_send">Отправить</button>' +
         '<div class="row2" style="margin-top:8px">' +
           '<button class="btn ghost sm" type="button" id="br_copy">Скопировать</button>' +
           '<button class="btn ghost sm" type="button" id="br_save">Сохранить</button>' +
         '</div>' +
-        '<div class="mini" style="margin-top:10px" id="br_info">Версия ' + esc(d.version.name) +
+        '<div id="br_status" style="margin-top:10px"></div>' +
+        '<div class="mini" style="margin-top:10px">Версия ' + esc(d.version.name) +
           ' · Android ' + esc(d.android) + (d.model ? ' · ' + esc(d.model) : '') +
           ' · ' + esc(d.screen) + '</div>' +
       '</div>' +
-      '<div class="note">Отчёт откроется на GitHub с уже заполненным текстом — останется нажать «Submit new issue». ' +
-      'Если отправить не получится, скопируйте текст и передайте любым удобным способом.</div>' +
+      '<div class="note">Отчёт уходит разработчику по сети. Если интернета нет — сохранится и отправится ' +
+      'автоматически при следующем запуске.</div>' +
       '<div class="h">Мои отчёты</div><div id="br_list">' + bugList() + '</div>';
   },
   mount(){
     const ta = $('br_text');
-    const send = $('br_send'), copy = $('br_copy'), save = $('br_save');
-    ['br_type','br_contact'].forEach(id => { const el = $(id); if(el){ el.addEventListener('change', () => {}); } });
+    const btn = $('br_send');
+    const st = $('br_status');
 
-    send.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const text = (ta.value || '').trim();
       if(text.length < 10){ toast('Опишите проблему подробнее'); ta.focus(); return; }
       const type = val('br_type'), contact = val('br_contact').trim();
-      bugSave(type, text, true);
-      openExternal(bugIssueUrl(type, text, contact));
-      toast('Отчёт открыт на GitHub');
-      ta.value = '';
-      return;
+      btn.disabled = true;
+      btn.textContent = 'Отправляю…';
+      st.innerHTML = '<div class="mini">Отправляю отчёт…</div>';
+      const res = await sendReport(type, text, contact);
+      btn.disabled = false;
+      btn.textContent = 'Отправить';
+      if(res.ok){
+        bugSave(type, text, true);
+        st.innerHTML = '<div class="note" style="margin-top:0;color:#4ad991">' +
+          'Отправлено. Спасибо — отчёт получен.</div>';
+        ta.value = '';
+        $('br_list').innerHTML = bugList();
+        bindBugDel();
+        toast('Отчёт отправлен');
+      } else if(res.reason === 'net'){
+        queueAdd(type, text, contact);
+        st.innerHTML = '<div class="warn">Нет интернета. Отчёт сохранён и уйдёт автоматически ' +
+          'при следующем запуске с сетью.</div>';
+        ta.value = '';
+        $('br_list').innerHTML = bugList();
+        bindBugDel();
+      } else {
+        st.innerHTML = '<div class="warn">Не удалось отправить. Попробуйте позже или скопируйте текст.</div>';
+      }
     });
-    copy.addEventListener('click', () => {
+
+    $('br_copy').addEventListener('click', () => {
       const text = (ta.value || '').trim();
       if(text.length < 5){ toast('Введите текст'); return; }
       const full = bugBody(val('br_type'), text, val('br_contact').trim());
@@ -113,7 +209,8 @@ SCREENS.bug = {
       document.body.removeChild(tmp);
       toast(ok ? 'Текст скопирован' : 'Выделите текст и скопируйте вручную');
     });
-    save.addEventListener('click', () => {
+
+    $('br_save').addEventListener('click', () => {
       const text = (ta.value || '').trim();
       if(text.length < 10){ toast('Опишите проблему подробнее'); return; }
       bugSave(val('br_type'), text, false);
