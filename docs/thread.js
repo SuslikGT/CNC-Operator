@@ -113,11 +113,15 @@ function thCalc(){
   const out = $('th_out'); if(!out) return;
   const d = num('th_d', 0), P = num('th_p', 0);
   if(!(d > 0) || !(P > 0)){ out.innerHTML = '<div class="note" style="grid-column:1/-1">Введите диаметр и шаг</div>'; return; }
-  const d2 = d - 0.6495 * P;
-  const d1 = d - 1.0825 * P;
-  const d3 = d - 1.2269 * P;
-  const H = 0.866 * P;
-  const h3 = 0.6134 * P;
+  const type = segVal('th_type') || 'metric';
+  const prof = type === 'trap' ? {k2: 0.5, k1: 1.0, k3: 1.0, H: 1.866, h: 0.5, name: '30°'}
+    : type === 'pipe' ? {k2: 0.6403, k1: 1.2806, k3: 1.2806, H: 0.960, h: 0.6403, name: '55°'}
+    : {k2: 0.6495, k1: 1.0825, k3: 1.2269, H: 0.866, h: 0.6134, name: '60°'};
+  const d2 = d - prof.k2 * P;
+  const d1 = d - prof.k1 * P;
+  const d3 = d - prof.k3 * P;
+  const H = prof.H * P;
+  const h3 = prof.h * P;
   const drill = d - P;
   const mode = segVal('th_mode') || 'vc';
   let vc, n;
@@ -144,7 +148,7 @@ function thCalc(){
     rbox('Скорость резания Vc', fmt(vc, 1), 'м/мин') +
     rbox('Подача (шаг)', fmt(P, 3), 'мм/об') +
     rbox('Проходов резца', fmt0(passes), 'шт') +
-    '<div class="note" style="grid-column:1/-1">Высота исходного треугольника H = ' + fmt(H, 3) +
+    '<div class="note" style="grid-column:1/-1">Профиль ' + prof.name + ': H = ' + fmt(H, 3) +
     ' мм · ширина впадины ' + fmt(P / 2, 3) + ' мм · ' + fmt(tpi, 2) + ' ниток на дюйм. ' +
     'Первый проход резца — 60 % от заданного съёма, последний — 0,05 мм.</div>' +
     '<div class="note" style="grid-column:1/-1">Резьба режется только на постоянных оборотах: ' +

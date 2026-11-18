@@ -1,8 +1,8 @@
 /* Ядро: роутер, хранилище, помощники */
 const SCREENS = {};
 window.SCREENS = SCREENS;
-const APP_VERSION = '2.0.08';
-const APP_VERSION_CODE = 15;
+const APP_VERSION = '2.0.12';
+const APP_VERSION_CODE = 19;
 const $ = id => document.getElementById(id);
 const $$ = sel => Array.prototype.slice.call(document.querySelectorAll(sel));
 
@@ -162,6 +162,7 @@ const ICONS = {
   shape:'<svg viewBox="0 0 24 24"><path d="M12 3l9 17H3z"/><path d="M8.5 15h7"/></svg>',
   thread:'<svg viewBox="0 0 24 24"><path d="M8 21l3-18"/><path d="M11 5h5M10 9h5M9 13h5M8 17h5"/></svg>',
   wave:'<svg viewBox="0 0 24 24"><path d="M2 12h3l2.5-7 3.5 14 3-9 2 2H22"/></svg>',
+  ruler:'<svg viewBox="0 0 24 24"><rect x="2.5" y="8.5" width="19" height="7" rx="1.5"/><path d="M7 8.5v3M10.5 8.5v4M14 8.5v3M17.5 8.5v4"/></svg>',
   swap:'<svg viewBox="0 0 24 24"><path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/></svg>',
   diamond:'<svg viewBox="0 0 24 24"><path d="M12 3l7.5 9-7.5 9-7.5-9z"/><path d="M8 12h8"/></svg>',
   holder:'<svg viewBox="0 0 24 24"><path d="M3 9h10l6 3-6 3H3z"/><path d="M3 9v6"/></svg>',
@@ -185,6 +186,7 @@ const TILES = [
   {id:'geo',    ic:'shape',   c:'#4ad991', t:'Геометрия и вес', s:'фаска, конус, масса'},
   {id:'thread', ic:'thread',  c:'#c78bd8', t:'Резьба и отверстия', s:'метрика, трубная, UNC'},
   {id:'rough',  ic:'wave',    c:'#ffc75f', t:'Шероховатость', s:'Ra ↔ подача, допуски'},
+  {id:'toler',  ic:'ruler',   c:'#9b8cff', t:'Допуски и посадки', s:'14h14, 12h9, 4G10'},
   {id:'units',  ic:'swap',    c:'#5fb3b3', t:'Перевод единиц', s:'мм↔дюйм, Vc↔SFM, HB'},
   {id:'insert', ic:'diamond', c:'#a9b8c8', t:'Пластины ISO', s:'CNMG 120408 — разбор'},
   {id:'holder', ic:'holder',  c:'#a9b8c8', t:'Державки', s:'MCLNR 2525 M12'},
@@ -229,7 +231,7 @@ function homeHTML(){
   out += '</div><div class="note" style="margin-top:18px">Расчёты и таблицы — справочные. ' +
     'Перед запуском сверяйтесь с документацией станка и каталогом инструмента.</div>';
   const ver = (typeof appVersion === 'function') ? appVersion().name : '1.1';
-  out += '<div class="footer"><span>© 2026 <b style="color:#e3edf6">SuslikGT</b> · v' + ver + '</span>' +
+  out += '<div class="footer"><span>© 2026 <b data-egg="1" style="color:#e3edf6">SuslikGT</b> · v' + ver + '</span>' +
     '<button class="linkbtn" data-go="about" type="button">О приложении</button></div>';
   return out;
 }

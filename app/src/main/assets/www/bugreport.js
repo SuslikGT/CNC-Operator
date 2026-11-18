@@ -13,12 +13,42 @@ function openExternal(url){
 }
 function deviceInfo(){
   const ua = navigator.userAgent || '';
-  const m = ua.match(/Android\s+([\d.]+)/i);
-  const model = (ua.match(/;\s*([^;)]+)\s*Build/i) || [])[1] || '';
+  const apk = !!(window.Native && window.Native.versionName);
+  const standalone = !!(navigator.standalone ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
+  const mode = apk ? 'APK' : standalone ? 'PWA с экрана' : 'браузер';
+
+  let os = 'неизвестно', ver = '', model = '';
+  const a = ua.match(/Android\s+([\d.]+)/i);
+  const i = ua.match(/OS\s+([\d_]+)\s+like\s+Mac/i);
+  if(a){
+    os = 'Android';
+    ver = a[1];
+    model = ((ua.match(/;\s*([^;)]+)\s*Build/i) || [])[1] || '').trim();
+  } else if(/iPhone/i.test(ua)){
+    os = 'iOS';
+    ver = i ? i[1].replace(/_/g, '.') : '';
+    model = 'iPhone';
+  } else if(/iPad/i.test(ua)){
+    os = 'iPadOS';
+    ver = i ? i[1].replace(/_/g, '.') : '';
+    model = 'iPad';
+  } else if(/Windows/i.test(ua)){
+    os = 'Windows';
+  } else if(/Mac OS X/i.test(ua)){
+    os = 'macOS';
+  } else if(/Linux/i.test(ua)){
+    os = 'Linux';
+  }
+
+  const device = os + (ver ? ' ' + ver : '') + (model && model !== os ? ', ' + model : '') + ' · ' + mode;
   return {
     version: (typeof appVersion === 'function') ? appVersion() : {name: '—', code: '—'},
-    android: m ? m[1] : '—',
-    model: model.trim(),
+    os: os,
+    android: ver,
+    model: model,
+    mode: mode,
+    device: device,
     screen: window.screen.width + '×' + window.screen.height,
     dpr: window.devicePixelRatio || 1
   };
@@ -37,7 +67,8 @@ function bugPayload(type, text, contact){
     'Текст': text.trim(),
     'Контакт': contact || '—',
     'Версия': d.version.name + ' (' + d.version.code + ')',
-    'Устройство': 'Android ' + d.android + (d.model ? ', ' + d.model : ''),
+    'Устройство': d.device,
+    'Платформа': d.os + ' · ' + d.mode,
     'Экран': d.screen + ' ×' + d.dpr,
     'Дата': bugStamp(),
     '_subject': 'ЧПУ Оператор: баг-репорт',
@@ -50,7 +81,7 @@ function bugBody(type, text, contact){
   return '### ' + bugTypeLabel(type) + '\n\n' + text.trim() +
     '\n\n---\n' +
     '**Версия:** ' + d.version.name + ' (' + d.version.code + ')\n' +
-    '**Устройство:** Android ' + d.android + (d.model ? ', ' + d.model : '') + '\n' +
+    '**Устройство:** ' + d.device + '\n' +
     '**Экран:** ' + d.screen + ' (×' + d.dpr + ')\n' +
     '**Дата:** ' + bugStamp() + '\n' +
     (contact ? '**Связь:** ' + contact + '\n' : '');
@@ -94,14 +125,14 @@ function bugSave(type, text, sent){
   const d = deviceInfo();
   const list = lsGet(BUG_KEY, []);
   list.unshift({id: Date.now(), t: Date.now(), type: type, text: text, sent: !!sent,
-    ver: d.version.name + ' (' + d.version.code + ')', andr: d.android, model: d.model});
+    ver: d.version.name + ' (' + d.version.code + ')', andr: d.android, model: d.model, dev: d.device});
   lsSet(BUG_KEY, list.slice(0, 30));
 }
 function queueAdd(type, text, contact){
   const d = deviceInfo();
   const q = lsGet(BUG_QUEUE, []);
   q.unshift({id: Date.now(), t: Date.now(), type: type, text: text, contact: contact || '',
-    ver: d.version.name + ' (' + d.version.code + ')', andr: d.android, model: d.model});
+    ver: d.version.name + ' (' + d.version.code + ')', andr: d.android, model: d.model, dev: d.device});
   lsSet(BUG_QUEUE, q.slice(0, 20));
 }
 function queueSet(list){ lsSet(BUG_QUEUE, list); }
@@ -161,7 +192,8 @@ SCREENS.bugview = {
       '<div class="card">' +
         '<div class="mini">Статус: <span style="color:' + color + '">' + state + '</span></div>' +
         (r.ver ? '<div class="mini">Версия: ' + esc(r.ver) + '</div>' : '') +
-        (r.andr ? '<div class="mini">Устройство: Android ' + esc(r.andr) + (r.model ? ', ' + esc(r.model) : '') + '</div>' : '') +
+        (r.dev ? '<div class="mini">Устройство: ' + esc(r.dev) + '</div>'
+          : (r.andr ? '<div class="mini">Устройство: Android ' + esc(r.andr) + (r.model ? ', ' + esc(r.model) : '') + '</div>' : '')) +
         (r.contact ? '<div class="mini">Контакт: ' + esc(r.contact) + '</div>' : '') +
       '</div>' +
       '<button class="btn ghost sm" type="button" id="bv_copy">Скопировать текст</button>';
@@ -203,8 +235,7 @@ SCREENS.bug = {
         '</div>' +
         '<div id="br_status" style="margin-top:10px"></div>' +
         '<div class="mini" style="margin-top:10px">Версия ' + esc(d.version.name) +
-          ' · Android ' + esc(d.android) + (d.model ? ' · ' + esc(d.model) : '') +
-          ' · ' + esc(d.screen) + '</div>' +
+          ' · ' + esc(d.device) + ' · ' + esc(d.screen) + '</div>' +
       '</div>' +
       '<div class="note">Отчёт уходит разработчику по сети. Если интернета нет — сохранится и отправится ' +
       'автоматически при следующем запуске.</div>' +

@@ -1,5 +1,5 @@
 /* Офлайн-кэш веб-версии «ЧПУ Оператор» */
-const CACHE = 'cnc-operator-2.0.08';
+const CACHE = 'cnc-operator-2.0.12';
 const ASSETS = [
   './',
   'index.html',
@@ -9,6 +9,7 @@ const ASSETS = [
   'calc.js',
   'schemes.js',
   'tool-schemes.js',
+  'toler.js',
   'thread.js',
   'tool.js',
   'metals.js',
@@ -18,6 +19,7 @@ const ASSETS = [
   'updates.js',
   'about.js',
   'bugreport.js',
+  'arcade.js',
   'webapp.js',
   'manifest.webmanifest',
   'icons/icon-192.png',

@@ -206,7 +206,9 @@ function spCalc(){
         ? '<b>G97 S' + fmt0(n) + '</b> — постоянные обороты; Vc на ⌀' + fmt(Dm, 1) + ' = ' + fmt(vcFact, 1) + ' м/мин.'
         : '<b>G96 S' + fmt0(vcSet) + ' LIMS=' + Math.min(4000, Math.ceil(n / 100) * 100) +
           '</b> — постоянная Vc; обороты на ⌀' + fmt(Dm, 1) + ' = ' + fmt0(n) + ' об/мин.') +
-    '</div>';
+    '</div>' +
+    (n > 4000 ? '<div class="warn" style="grid-column:1/-1">' + fmt0(n) +
+      ' об/мин выше паспортного лимита шпинделя 4000 — снизьте Vc или задайте LIMS=4000.</div>' : '');
   spRows = [
     ['Материал', b.m.name], ['Режим', b.mode === 'n' ? 'G97, постоянные обороты' : 'G96, постоянная Vc'],
     ['Операция', b.op === 'turn' ? 'точение' : b.op === 'mill' ? 'фрезерование' : 'сверление'],
@@ -360,6 +362,11 @@ function geoCalc(){
   const o4 = $('ge_out4');
   if(o4){
     if(a2 > 0 && L2 > 0){
+      if(shape === 'tube' && !(b < a2)){
+        o4.innerHTML = '<div class="warn">Внутренний диаметр должен быть меньше наружного: ' +
+          fmt(b, 1) + ' мм не может быть при наружном ' + fmt(a2, 1) + ' мм.</div>';
+        return;
+      }
       let V = 0;
       if(shape === 'round') V = Math.PI / 4 * a2 * a2 * L2;
       else if(shape === 'square') V = a2 * a2 * L2;

@@ -41,7 +41,13 @@ html = html.replace('<script src="bugreport.js"></script>',
 fs.writeFileSync(path.join(out, 'index.html'), html);
 
 for(const f of ['manifest.webmanifest', 'sw.js', 'webapp.js', 'icon.svg']){
-  fs.copyFileSync(path.join(web, f), path.join(out, f));
+  let content = fs.readFileSync(path.join(web, f), 'utf8');
+  if(f === 'sw.js'){
+    const appJs = fs.readFileSync(path.join(out, 'app.js'), 'utf8');
+    const ver = (appJs.match(/const APP_VERSION = '([^']+)'/) || [])[1] || 'dev';
+    content = content.replace('__VERSION__', ver);
+  }
+  fs.writeFileSync(path.join(out, f), content);
 }
 
 const iconsSrc = path.join(web, 'icons');
