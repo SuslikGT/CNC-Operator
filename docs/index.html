@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0e13">
+<title>ЧПУ · Оператор</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ЧПУ Оператор">
+<meta name="application-name" content="ЧПУ Оператор">
+</head>
+<body>
+<div id="topbar">
+  <button id="back" class="back" hidden aria-label="Назад">
+    <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+  </button>
+  <div id="title" class="ttl">ЧПУ · Оператор</div>
+  <button id="home" class="back" hidden aria-label="На главную">
+    <svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6.5 10v9h11v-9"/></svg>
+  </button>
+</div>
+<div id="view"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="calc.js"></script>
+<script src="schemes.js"></script>
+<script src="tool-schemes.js"></script>
+<script src="thread.js"></script>
+<script src="tool.js"></script>
+<script src="metals.js"></script>
+<script src="refs.js"></script>
+<script src="machine.js"></script>
+<script src="sources.js"></script>
+<script src="updates.js"></script>
+<script src="about.js"></script>
+<script src="bugreport.js"></script>
+<script src="webapp.js"></script>
+<script>start();</script>
+</body>
+</html>
