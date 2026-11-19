@@ -166,6 +166,12 @@ function bugRow(r, src){
     '<button class="del" type="button" data-bugdel="' + r.id + '" data-src="' + src + '">×</button></div>' +
     '<div class="mini" style="margin-top:6px;color:' + color + '">' + state + ' · открыть</div></div>';
 }
+function updateBugCount(){
+  const el = $('br_count');
+  if(!el) return;
+  const n = (lsGet(BUG_KEY, []) || []).length + (lsGet(BUG_QUEUE, []) || []).length;
+  el.textContent = 'Мои отчёты' + (n ? ' · ' + n : '');
+}
 function bugList(){
   const list = lsGet(BUG_KEY, []);
   const q = lsGet(BUG_QUEUE, []);
@@ -239,7 +245,11 @@ SCREENS.bug = {
       '</div>' +
       '<div class="note">Отчёт уходит разработчику по сети. Если интернета нет — сохранится и отправится ' +
       'автоматически при следующем запуске.</div>' +
-      '<div class="h">Мои отчёты</div><div id="br_list">' + bugList() + '</div>';
+      '<button class="collapse-head" type="button" data-collapse="br_box" aria-expanded="false">' +
+        '<span id="br_count">Мои отчёты' + (function(){ const n = (lsGet(BUG_KEY, []) || []).length + (lsGet(BUG_QUEUE, []) || []).length; return n ? ' · ' + n : ''; })() + '</span>' +
+        '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>' +
+      '</button>' +
+      '<div class="collapse-body" id="br_box"><div id="br_list">' + bugList() + '</div></div>';
   },
   mount(){
     const ta = $('br_text');
@@ -261,7 +271,7 @@ SCREENS.bug = {
         st.innerHTML = '<div class="note" style="margin-top:0;color:#4ad991">' +
           'Отправлено. Спасибо — отчёт получен.</div>';
         ta.value = '';
-        $('br_list').innerHTML = bugList();
+        $('br_list').innerHTML = bugList(); updateBugCount();
         bindBugList();
         toast('Отчёт отправлен');
       } else if(res.reason === 'offline'){
@@ -269,14 +279,14 @@ SCREENS.bug = {
         st.innerHTML = '<div class="warn">Нет интернета. Отчёт сохранён и уйдёт автоматически ' +
           'при следующем запуске с сетью.</div>';
         ta.value = '';
-        $('br_list').innerHTML = bugList();
+        $('br_list').innerHTML = bugList(); updateBugCount();
         bindBugList();
       } else if(res.reason === 'noconfirm'){
         bugSave(type, text, true);
         st.innerHTML = '<div class="note" style="margin-top:0;color:#4ad991">Отправлено. Спасибо — отчёт получен.' +
           '<div class="mini" style="margin-top:4px">Сервер ответил с задержкой, это нормально.</div></div>';
         ta.value = '';
-        $('br_list').innerHTML = bugList();
+        $('br_list').innerHTML = bugList(); updateBugCount();
         bindBugList();
       } else {
         st.innerHTML = '<div class="warn">Не удалось отправить. Попробуйте позже или скопируйте текст.</div>';
@@ -301,7 +311,7 @@ SCREENS.bug = {
       if(text.length < 10){ toast('Опишите проблему подробнее'); return; }
       bugSave(val('br_type'), text, false);
       ta.value = '';
-      $('br_list').innerHTML = bugList();
+      $('br_list').innerHTML = bugList(); updateBugCount();
       bindBugList();
       toast('Сохранено на телефоне');
     });
@@ -318,7 +328,7 @@ function bindBugList(){
     const key = (b.dataset.src === 'q') ? BUG_QUEUE : BUG_KEY;
     lsSet(key, lsGet(key, []).filter(x => String(x.id) !== b.dataset.bugdel));
     const box = $('br_list');
-    if(box) box.innerHTML = bugList();
+    if(box) box.innerHTML = bugList(); updateBugCount();
     bindBugList();
   }));
 }

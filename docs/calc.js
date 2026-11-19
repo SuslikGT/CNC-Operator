@@ -37,6 +37,7 @@ let spRows = [];
 SCREENS.speed = {
   title: 'Режимы резания',
   render(){
+    if((typeof curMachine === 'function') && curMachine().grind) return grindModesPage();
     const matOpts = D.materials.map(m => [m.id, m.name]);
     return '<div class="card">' +
       selFld('sp_mat', 'Материал заготовки', matOpts, 'st20') +
@@ -77,6 +78,7 @@ SCREENS.speed = {
       'Прерывистое резание уменьшайте на 20 %, без СОЖ — на 15–20 %, слабая жёсткость системы — ещё 20 %.</div>';
   },
   mount(){
+    if((typeof curMachine === 'function') && curMachine().grind){ grindModesMount(); return; }
     const opEl = $('sp_op');
     opEl.addEventListener('seg', () => {
       $('sp_millrow').style.display = segVal('sp_op') === 'mill' ? 'grid' : 'none';
@@ -208,7 +210,11 @@ function spCalc(){
           '</b> — постоянная Vc; обороты на ⌀' + fmt(Dm, 1) + ' = ' + fmt0(n) + ' об/мин.') +
     '</div>' +
     (n > 4000 ? '<div class="warn" style="grid-column:1/-1">' + fmt0(n) +
-      ' об/мин выше паспортного лимита шпинделя 4000 — снизьте Vc или задайте LIMS=4000.</div>' : '');
+      ' об/мин выше паспортного лимита шпинделя 4000 — снизьте Vc или задайте LIMS=4000.</div>' : '') +
+    (b.op === 'turn' ? '<div class="note" style="grid-column:1/-1">Мощность = ap × f × Vc × kc / 60000. ' +
+      'Сейчас: kc = ' + fmt0(kc) + ' Н/мм², Vc = ' + fmt(vcFact, 1) + ' м/мин. Сталь обрабатывают на большей ' +
+      'скорости, чем нержавейку и чугун, поэтому при равном съёме она грузит шпиндель сильнее — ' +
+      'хотя удельная сила резания у нержавейки выше.</div>' : '');
   spRows = [
     ['Материал', b.m.name], ['Режим', b.mode === 'n' ? 'G97, постоянные обороты' : 'G96, постоянная Vc'],
     ['Операция', b.op === 'turn' ? 'точение' : b.op === 'mill' ? 'фрезерование' : 'сверление'],

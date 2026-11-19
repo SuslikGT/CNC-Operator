@@ -114,12 +114,13 @@ function thCalc(){
   const d = num('th_d', 0), P = num('th_p', 0);
   if(!(d > 0) || !(P > 0)){ out.innerHTML = '<div class="note" style="grid-column:1/-1">Введите диаметр и шаг</div>'; return; }
   const type = segVal('th_type') || 'metric';
-  const prof = type === 'trap' ? {k2: 0.5, k1: 1.0, k3: 1.0, H: 1.866, h: 0.5, name: '30°'}
+  const acTrap = P <= 1.5 ? 0.15 : (P <= 4 ? 0.25 : (P <= 12 ? 0.5 : 1.0));
+  const prof = type === 'trap' ? {k2: 0.5, k1: 1.0, k3: 1.0, H: 1.866, h: 0.5, name: '30°', ac: acTrap}
     : type === 'pipe' ? {k2: 0.6403, k1: 1.2806, k3: 1.2806, H: 0.960, h: 0.6403, name: '55°'}
     : {k2: 0.6495, k1: 1.0825, k3: 1.2269, H: 0.866, h: 0.6134, name: '60°'};
   const d2 = d - prof.k2 * P;
   const d1 = d - prof.k1 * P;
-  const d3 = d - prof.k3 * P;
+  const d3 = prof.ac ? d - P - 2 * prof.ac : d - prof.k3 * P;
   const H = prof.H * P;
   const h3 = prof.h * P;
   const drill = d - P;
@@ -144,6 +145,7 @@ function thCalc(){
     rbox('По дну болта d3', fmt(d3, 3), 'мм') +
     rbox('Высота профиля h', fmt(depth, 3), 'мм') +
     rbox('Сверло под резьбу', fmt(drill, 2), 'мм') +
+    rbox('Стержень под резьбу', fmt(d - 0.1 * P, 2), 'мм') +
     rbox('Обороты метчика', fmt0(n), 'об/мин') +
     rbox('Скорость резания Vc', fmt(vc, 1), 'м/мин') +
     rbox('Подача (шаг)', fmt(P, 3), 'мм/об') +

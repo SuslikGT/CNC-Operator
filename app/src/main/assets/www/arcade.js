@@ -79,18 +79,23 @@ SCREENS.arcade = {
     return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center">' +
         '<div style="font-weight:700">Стружка</div>' +
         '<button class="del" type="button" data-arc="exit">×</button></div>' +
-        '<div class="mini" style="margin-top:4px">Собирай стружку и не врезайся в стену и себя.</div></div>' +
+        '<div class="mini" style="margin-top:4px">Собирай стружку и не врезайся в стену и себя. ' +
+          'Направление — свайпом по полю или стрелками.</div></div>' +
       '<div class="card" style="padding:10px">' +
         '<canvas id="arc_cv" width="300" height="300" style="width:100%;max-width:320px;display:block;margin:0 auto;' +
-          'border-radius:12px;background:#0b1116;border:1px solid var(--line)"></canvas>' +
+          'border-radius:12px;background:#0b1116;border:1px solid var(--line);touch-action:none"></canvas>' +
         '<div id="arc_score" class="mini" style="text-align:center;margin-top:8px">Счёт: 0</div>' +
         '<div class="row3" style="margin-top:10px">' +
+          '<div></div>' +
           '<button class="btn sm" type="button" data-dir="up">↑</button>' +
+          '<div></div>' +
+        '</div>' +
+        '<div class="row3" style="margin-top:6px">' +
           '<button class="btn sm" type="button" data-dir="left">←</button>' +
           '<button class="btn sm" type="button" data-dir="down">↓</button>' +
-        '</div>' +
-        '<div class="row2" style="margin-top:8px">' +
           '<button class="btn sm" type="button" data-dir="right">→</button>' +
+        '</div>' +
+        '<div class="row2" style="margin-top:6px">' +
           '<button class="btn sm" type="button" id="arc_again">Заново</button>' +
         '</div>' +
       '</div>';
@@ -241,6 +246,26 @@ SCREENS.arcade = {
       const map = {ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right'};
       if(map[e.key]){ e.preventDefault(); turn(map[e.key]); }
     };
+    let sx = 0, sy = 0, swiped = false;
+    cv.addEventListener('touchstart', e => {
+      const t = e.changedTouches[0];
+      sx = t.clientX; sy = t.clientY; swiped = false;
+    }, {passive: true});
+    cv.addEventListener('touchmove', e => {
+      if(swiped) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - sx, dy = t.clientY - sy;
+      if(Math.max(Math.abs(dx), Math.abs(dy)) < 22) return;
+      swiped = true;
+      turn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+    }, {passive: true});
+    cv.addEventListener('touchend', e => {
+      if(swiped) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - sx, dy = t.clientY - sy;
+      if(Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+      turn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+    }, {passive: true});
     window.addEventListener('keydown', ARC.keys);
     draw();
     ARC.timer = setInterval(tick, 150);

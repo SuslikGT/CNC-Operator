@@ -20,6 +20,7 @@ const ASSETS = [
   'about.js',
   'bugreport.js',
   'arcade.js',
+  'metrika.js',
   'webapp.js',
   'manifest.webmanifest',
   'icons/icon-192.png',

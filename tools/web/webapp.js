@@ -15,6 +15,13 @@
   /* На веб-версии обновления приходят вместе со страницей, проверять APK не нужно */
   window.updatesInit = function(){};
 
+  /* На главной веб-версии пункт «Обновления» не нужен */
+  if(typeof TILES !== 'undefined' && TILES.splice){
+    for(let i = TILES.length - 1; i >= 0; i--){
+      if(TILES[i].id === 'updates') TILES.splice(i, 1);
+    }
+  }
+
   const ver = (typeof appVersion === 'function') ? appVersion().name : '—';
   SCREENS.updates = {
     title: 'Обновления',

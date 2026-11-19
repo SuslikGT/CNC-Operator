@@ -151,6 +151,7 @@ function tolCalc(){
     rbox('Нижнее отклонение', sign(ei), 'мм', ei < 0 ? 'bad' : '') +
     rbox('Наибольший размер', mm(max), 'мм') +
     rbox('Наименьший размер', mm(min), 'мм') +
+    rbox('Средний размер', mm((max + min) / 2), 'мм', 'good') +
     '<div class="note" style="grid-column:1/-1">' + esc(p.raw) + ' — ' + kind + ', интервал ' +
       fmt(rg.r.lo, 0) + '–' + fmt(rg.r.hi, 0) + ' мм, квалитет IT' + p.grade + ' = ' + fmt0(it) + ' мкм. ' +
       TOL_LETTERS[p.letter] + '.</div>' +
@@ -158,16 +159,21 @@ function tolCalc(){
       ' мм больше 500 — таблица ISO 286 до 500 мм, значения взяты для последнего интервала (400–500).</div>' : '');
 }
 
+let TOL_UNIT = 'mm';
+function tolVal(um){
+  return TOL_UNIT === 'mm' ? fmt(um / 1000, 3) : fmt0(um);
+}
 SCREENS.toler = {
   title: 'Допуски и посадки',
   render(){
+    const unit = TOL_UNIT === 'mm' ? 'мм' : 'мкм';
     const itRows = (from, to) => {
       let h = '<div class="tw"><table><tr><th>Размер, мм</th>';
       for(let g = from; g <= to; g++) h += '<th class="n">IT' + g + '</th>';
       h += '</tr>';
       TOL_RANGES.forEach((r, i) => {
         h += '<tr><td>' + (i === 0 ? 'до 3' : fmt(r.lo, 0) + '–' + fmt(r.hi, 0)) + '</td>';
-        for(let g = from; g <= to; g++) h += '<td class="n">' + TOL_IT[g][i] + '</td>';
+        for(let g = from; g <= to; g++) h += '<td class="n">' + tolVal(TOL_IT[g][i]) + '</td>';
         h += '</tr>';
       });
       return h + '</table></div>';
@@ -179,19 +185,25 @@ SCREENS.toler = {
             '<span class="pill" data-tol="' + x + '">' + x + '</span>').join('') + '</div>' +
         '<div class="res" id="tol_out"></div>' +
       '</div>' +
-      '<div class="h">Допуски IT, мкм</div>' +
+      '<div class="h">Допуски IT, ' + unit + '</div>' +
+      seg('tol_unit', [['mm','В мм'],['um','В мкм']], TOL_UNIT) +
       itRows(5, 11) +
-      '<div class="h">Грубые квалитеты, мкм</div>' +
+      '<div class="h">Грубые квалитеты, ' + unit + '</div>' +
       itRows(12, 18) +
       '<div class="note">IT — допуск по ISO 286-1 / ГОСТ 25346. Для 14h14: 14,000 / 13,570 мм. ' +
       'Буквы: a…h — вал с зазором, js — симметрично, k…n — переходные; A…H, JS, K…N — то же для отверстий. ' +
-      'Отклонения a…g и k…n считаются по формулам стандарта, H/h и js — точно по таблице IT.</div>' +
-      '<div class="warn">Значения допусков стандартные, но посадки с натягом (p…z) требуют проверки по справочнику: ' +
-      'в этом разделе они не считаются.</div>';
+      'Значения отклонений — табличные, по ISO 286.</div>' +
+      '<div class="warn">Посадки с натягом (p…z и P…Z) в этом разделе не считаются: ' +
+      'их подбирают по справочнику.</div>';
   },
   mount(){
     const q = $('tol_q');
     if(!q) return;
+    const unitSeg = $('tol_unit');
+    if(unitSeg) unitSeg.addEventListener('seg', () => {
+      TOL_UNIT = segVal('tol_unit') || 'mm';
+      paint();
+    });
     q.addEventListener('input', tolCalc);
     q.addEventListener('change', tolCalc);
     $$('[data-tol]').forEach(b => b.addEventListener('click', () => {

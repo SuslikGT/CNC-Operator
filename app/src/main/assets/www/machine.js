@@ -1,9 +1,70 @@
-/* Станок Headman T65M II/750 и команды Sinumerik 828D */
+/* Станок: выбор машины и страницы станков */
+
+function curMachine(){
+  const id = lsGet('machine.sel', 't65m');
+  return D.machines.find(m => m.id === id) || D.machines[0];
+}
+function setMachine(id){ lsSet('machine.sel', id); }
+function machKV(r){ return '<div class="kv"><span class="k">' + r[0] + '</span><span class="v">' + r[1] + '</span></div>'; }
+function machGeneric(m){
+  let h = '<div class="hero" style="margin-bottom:14px">' +
+    '<div class="kick">' + m.kind + ' · ' + m.cnc + '</div>' +
+    '<h1>' + m.name + '</h1>' +
+    '<p>' + (m.year ? m.year + ' · ' : '') + m.cnc + '</p></div>';
+  if(m.notes) h += '<div class="note">' + m.notes + '</div>';
+  h += '<div class="h">Характеристики</div><div class="card">' + (m.specs || []).map(machKV).join('') + '</div>';
+  if(m.similar && m.similar.length){
+    h += '<div class="h">Похожие станки</div><div class="card">' + m.similar.map(machKV).join('') + '</div>';
+  }
+  if(m.tips && m.tips.length){
+    h += '<div class="h">Подсказки</div><div class="card"><ul class="list">' +
+      m.tips.map(t => '<li>' + t + '</li>').join('') + '</ul></div>';
+  }
+  if(m.life && m.life.length){
+    h += '<div class="h">Лайфхаки</div><div class="card"><ul class="list">' +
+      m.life.map(t => '<li>' + t + '</li>').join('') + '</ul></div>';
+  }
+  h += '<div class="warn">Данные приведены по открытым источникам. Перед наладкой сверяйтесь ' +
+    'с паспортом станка и руководством по эксплуатации.</div>';
+  h += '<button class="btn ghost" type="button" data-go="siemens" style="margin-top:10px">Стойка ' +
+    m.cnc + '</button>';
+  h += '<button class="btn ghost" type="button" data-go="cmds" style="margin-top:8px">Команды стойки</button>';
+  h += '<button class="btn ghost" type="button" data-go="machines" style="margin-top:8px">Сменить станок</button>';
+  return h;
+}
+
+SCREENS.machines = {
+  title: 'Выбор станка',
+  render(){
+    const cur = curMachine();
+    let h = '<div class="card"><div class="mini">Активный станок: <b>' + cur.short + '</b>' +
+      '<div style="margin-top:6px">Нажмите на станок, чтобы открыть его раздел.</div></div></div>';
+    D.machines.forEach(m => {
+      const on = m.id === cur.id;
+      h += '<button class="tile" type="button" data-mach="' + m.id + '" style="width:100%;margin-bottom:10px' +
+        (on ? ';border-color:#ffb454' : '') + '">' +
+        '<span class="ic" style="color:#5ec8ff;background:rgba(94,200,255,.13);border-color:rgba(94,200,255,.26)">' +
+        ICONS.machine + '</span>' +
+        '<span><span class="cap">' + m.name + '</span>' +
+        '<span class="sub">' + m.kind + ' · ' + m.cnc + (on ? ' · выбран' : '') + '</span></span></button>';
+    });
+    return h;
+  },
+  mount(){
+    $$('[data-mach]').forEach(b => b.addEventListener('click', () => {
+      setMachine(b.dataset.mach);
+      homeNav();
+      toast('Станок: ' + curMachine().short);
+    }));
+  }
+};
 
 /* ================= СТАНОК ================= */
 SCREENS.machine = {
-  title: 'Станок T65M II/750',
+  title: 'Станок',
   render(){
+    const m = curMachine();
+    if(!m.custom) return machGeneric(m);
     return '<div class="hero" style="margin-bottom:14px">' +
       '<div class="kick">Headman · горизонтальный токарный центр</div>' +
       '<h1>T65M II/750</h1>' +
@@ -104,6 +165,7 @@ SCREENS.machine = {
        .map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>').join('') + '</table></div>';
   },
   mount(){
+    if(!$('mc_mode')) return;
     $('mc_mode').addEventListener('seg', mcModeSwitch);
     ['mc_d','mc_vc','mc_n'].forEach(id => {
       const el = $(id); if(el){ el.addEventListener('input', mcCalc); el.addEventListener('change', mcCalc); }
@@ -170,8 +232,9 @@ function mcCalc(){
 
 /* ================= КОМАНДЫ 828D ================= */
 SCREENS.cmds = {
-  title: 'Команды 828D',
+  title: 'Команды',
   render(){
+    if(cncInfo().id === 'fanuc') return fanucCmdsPage();
     const g828 = [
       ['G0','ускоренный ход','G0 X100 Z50'],
       ['G1','линейная интерполяция, F в мм/об или мм/мин','G1 X40 Z-30 F0,2'],

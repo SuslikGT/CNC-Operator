@@ -57,7 +57,7 @@ function insDecode(){
   put('Задний угол', rel ? rel : '—');
   put('Точность', tol ? tol : '—');
   put('Крепление', cl ? cl : '—');
-  put('Размер IC', sizeMm ? fmt(sizeMm, 3) + ' мм' : 'код ' + size);
+  put('Размер IC', sizeMm ? fmt(sizeMm, 3) + ' мм — диаметр вписанной окружности' : 'код ' + size);
   put('Толщина', thMm ? fmt(thMm, 2) + ' мм' : 'код ' + th);
   put('Радиус', radMm !== undefined ? fmt(radMm, 2) + ' мм' : 'код ' + rad);
   let note = '';

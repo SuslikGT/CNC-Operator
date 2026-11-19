@@ -2,8 +2,9 @@
 
 /* ================= SINUMERIK ================= */
 SCREENS.siemens = {
-  title: 'Sinumerik',
+  title: 'Стойка',
   render(){
+    if(cncInfo().id === 'fanuc') return fanucSystemPage();
     let h = '<div class="card">' +
       '<div class="kv"><span class="k">Стойка</span><span class="v">SINUMERIK 828D (T) · Operate, 10,4"</span></div>' +
       '<div class="kv"><span class="k">Станок</span><span class="v">Headman T65M II/750, оси X Z C</span></div>' +
@@ -19,10 +20,12 @@ SCREENS.siemens = {
       'DIAMON — программирование по диаметру. LIMS — ограничение оборотов при G96.</div>' +
       '<div class="h">Токарные циклы</div>';
     D.cycles.forEach(c => {
-      h += '<div class="card"><div style="font-size:15px;font-weight:700;color:#f2a33c">' + c.c + ' — ' + c.n + '</div>' +
-        '<div class="note" style="margin-top:4px">' + c.p + '</div>' +
-        '<pre class="code">' + c.e + '</pre>' +
-        '<div class="mini" style="margin-top:6px">' + c.t + '</div></div>';
+    h += '<div class="card"><div style="font-size:15px;font-weight:700;color:#f2a33c">' + c.c + ' — ' + c.n + '</div>' +
+      '<div class="note" style="margin-top:4px">' + c.p + '</div>' +
+      '<pre class="code">' + c.e + '</pre>' +
+      (c.how && c.how.length ? '<div class="mini" style="margin:8px 0 4px">Как писать:</div>' +
+        '<ul class="list">' + c.how.map(s => '<li>' + s + '</li>').join('') + '</ul>' : '') +
+      '<div class="mini" style="margin-top:6px">' + c.t + '</div></div>';
     });
     h += '<div class="warn">Параметры циклов зависят от версии ПО стойки. Перед первым запуском откройте подсказку: ' +
       'клавиша <b>«i»/Help</b> на стойке — она показывает актуальный список параметров и их порядок.</div>';
@@ -58,12 +61,21 @@ SCREENS.siemens = {
 SCREENS.corr = {
   title: 'Корректоры',
   render(){
-    return '<div class="card"><div class="h" style="margin-top:0">Промер диаметра</div>' +
-      '<div class="row2">' + fld('cr_nom', 'Номинал Ø', '30', 'мм') + fld('cr_meas', 'Измерено Ø', '30,05', 'мм') + '</div>' +
-      '<div class="row2">' + fld('cr_cur', 'Текущий корректор X', '0', 'мм') + '<div></div></div>' +
+    if(cncInfo().id === 'fanuc') return grindCorrPage();
+    return '<div class="card"><div class="kick">порядок действий</div>' +
+        '<div class="mini" style="margin-top:4px;line-height:1.6">' +
+          '1. Проточили деталь на нужный размер.<br>' +
+          '2. Измерили её микрометром.<br>' +
+          '3. Вписали номинал и что получилось.<br>' +
+          '4. Взяли поправку из результата.<br>' +
+          '5. Ввели её в корректор инструмента (Параметры → Инструмент → D… → X).' +
+        '</div></div>' +
+      '<div class="card"><div class="h" style="margin-top:0">Промер диаметра</div>' +
+      '<div class="row2">' + fld('cr_nom', 'Номинал Ø, мм', '30', 'мм') + fld('cr_meas', 'Измерено Ø, мм', '30,05', 'мм') + '</div>' +
+      '<div class="row2">' + fld('cr_cur', 'Корректор X сейчас (радиус)', '0', 'мм') + '<div></div></div>' +
       '<div class="res" id="cr_out1"></div></div>' +
       '<div class="card"><div class="h" style="margin-top:0">Промер длины</div>' +
-      '<div class="row2">' + fld('cr_znom', 'Номинал Z', '20', 'мм') + fld('cr_zmeas', 'Измерено Z', '20,03', 'мм') + '</div>' +
+      '<div class="row2">' + fld('cr_znom', 'Номинал Z, мм', '20', 'мм') + fld('cr_zmeas', 'Измерено Z, мм', '20,03', 'мм') + '</div>' +
       '<div class="res" id="cr_out2"></div></div>' +
       '<div class="card"><div class="h" style="margin-top:0">Привязка нуля G54 — X (ось)</div>' +
       '<div class="row2">' + fld('cr_xm', 'Машинная X при касании', '122,4', 'мм') +
@@ -85,6 +97,7 @@ SCREENS.corr = {
       'Изменение корректора действует со следующего кадра с этим D-номером.</div>';
   },
   mount(){
+    if(cncInfo().id === 'fanuc'){ grindCorrMount(); return; }
     ['cr_nom','cr_meas','cr_cur','cr_znom','cr_zmeas','cr_xm','cr_xd','cr_zm','cr_zb'].forEach(id => {
       const el = $(id); if(el){ el.addEventListener('input', crCalc); el.addEventListener('change', crCalc); }
     });
@@ -99,13 +112,14 @@ function crCalc(){
       const diff = meas - nom;          // + деталь больше
       const dX = -diff / 2;             // изменение корректора X (радиус)
       const newX = cur + dX;
-      o1.innerHTML = rbox('Отклонение Ø', (diff > 0 ? '+' : '') + fmt(diff, 3), 'мм', diff > 0 ? 'bad' : 'good') +
-        rbox('Изменить корректор X', (dX > 0 ? '+' : '') + fmt(dX, 3), 'мм', 'lead') +
-        rbox('Новый корректор X', fmt(newX, 3), 'мм') +
-        rbox('Изменить по диаметру', (dX * 2 > 0 ? '+' : '') + fmt(dX * 2, 3), 'мм') +
-        '<div class="note" style="grid-column:1/-1">' + (Math.abs(diff) < 0.005 ? 'В пределах допуска — ничего не меняем.' :
-          (diff > 0 ? 'Деталь больше: корректор X <b>уменьшить</b> на ' + fmt(Math.abs(dX), 3) + ' мм.' :
-            'Деталь меньше: корректор X <b>увеличить</b> на ' + fmt(Math.abs(dX), 3) + ' мм.')) + '</div>';
+      o1.innerHTML = rbox('Отклонение по диаметру', (diff > 0 ? '+' : '') + fmt(diff, 3), 'мм', diff > 0 ? 'bad' : 'good') +
+        rbox('Ввести в корректор X (радиус)', (dX > 0 ? '+' : '') + fmt(dX, 3), 'мм', 'lead') +
+        rbox('Станет в корректоре X', fmt(newX, 3), 'мм') +
+        rbox('Это же по диаметру', (dX * 2 > 0 ? '+' : '') + fmt(dX * 2, 3), 'мм') +
+        '<div class="note" style="grid-column:1/-1">' + (Math.abs(diff) < 0.005 ? 'В пределах 5 мкм — корректор не трогаем.' :
+          (diff > 0 ? 'Деталь больше номинала: в корректоре X <b>вычесть</b> ' + fmt(Math.abs(dX), 3) + ' мм.' :
+            'Деталь меньше номинала: в корректоре X <b>прибавить</b> ' + fmt(Math.abs(dX), 3) + ' мм.')) +
+        ' Вводится в Параметры → Инструмент → нужный D → X.</div>';
     } else o1.innerHTML = '';
   }
   const zn = num('cr_znom', 0), zm = num('cr_zmeas', 0);
@@ -113,10 +127,13 @@ function crCalc(){
   if(o2){
     if(isFinite(zn) && isFinite(zm)){
       const dz = zn - zm;
-      o2.innerHTML = rbox('Отклонение Z', fmt(zm - zn, 3), 'мм', 'lead') +
-        rbox('Поправка корректора Z', (dz > 0 ? '+' : '') + fmt(dz, 3), 'мм') +
-        '<div class="note" style="grid-column:1/-1">Знак поправки = (номинал − измерено). ' +
-        'Для торца и уступов проверяйте направление оси на вашем станке.</div>';
+      o2.innerHTML = rbox('Отклонение по Z', (zm - zn > 0 ? '+' : '') + fmt(zm - zn, 3), 'мм', 'lead') +
+        rbox('Ввести в корректор Z', (dz > 0 ? '+' : '') + fmt(dz, 3), 'мм') +
+        '<div class="note" style="grid-column:1/-1">Поправка = номинал − измерено: ' +
+        (Math.abs(dz) < 0.005 ? 'менять не нужно.' :
+          (dz > 0 ? 'деталь <b>короче</b>, в корректор Z прибавить ' + fmt(Math.abs(dz), 3) + ' мм.'
+                  : 'деталь <b>длиннее</b>, из корректора Z вычесть ' + fmt(Math.abs(dz), 3) + ' мм.')) +
+        ' Тот же D-корректор, столбец Z.</div>';
     } else o2.innerHTML = '';
   }
   const xm = num('cr_xm', 0), xd = num('cr_xd', 0);

@@ -1,8 +1,8 @@
 /* Ядро: роутер, хранилище, помощники */
 const SCREENS = {};
 window.SCREENS = SCREENS;
-const APP_VERSION = '2.0.12';
-const APP_VERSION_CODE = 19;
+const APP_VERSION = '2.0.21';
+const APP_VERSION_CODE = 28;
 const $ = id => document.getElementById(id);
 const $$ = sel => Array.prototype.slice.call(document.querySelectorAll(sel));
 
@@ -181,39 +181,46 @@ const ICONS = {
   user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>'
 };
 const TILES = [
-  {id:'speed',  ic:'gauge',   c:'#ffb454', t:'Режимы резания', s:'обороты, подача, мощность'},
-  {id:'time',   ic:'clock',   c:'#5ec8ff', t:'Время и стоимость', s:'машинное время, цена'},
-  {id:'geo',    ic:'shape',   c:'#4ad991', t:'Геометрия и вес', s:'фаска, конус, масса'},
-  {id:'thread', ic:'thread',  c:'#c78bd8', t:'Резьба и отверстия', s:'метрика, трубная, UNC'},
-  {id:'rough',  ic:'wave',    c:'#ffc75f', t:'Шероховатость', s:'Ra ↔ подача, допуски'},
-  {id:'toler',  ic:'ruler',   c:'#9b8cff', t:'Допуски и посадки', s:'14h14, 12h9, 4G10'},
-  {id:'units',  ic:'swap',    c:'#5fb3b3', t:'Перевод единиц', s:'мм↔дюйм, Vc↔SFM, HB'},
-  {id:'insert', ic:'diamond', c:'#a9b8c8', t:'Пластины ISO', s:'CNMG 120408 — разбор'},
-  {id:'holder', ic:'holder',  c:'#a9b8c8', t:'Державки', s:'MCLNR 2525 M12'},
-  {id:'drill',  ic:'drill',   c:'#a9b8c8', t:'Свёрла, метчики, фрезы', s:'обозначения'},
-  {id:'metals', ic:'layers',  c:'#e09a63', t:'Марки сталей', s:'30ХГСА и другие'},
-  {id:'machine',ic:'machine', c:'#5ec8ff', t:'Станок T65M II/750', s:'узлы, функции, приёмы'},
-  {id:'siemens',ic:'chip',    c:'#5ec8ff', t:'Sinumerik', s:'циклы, G-код, шаблон'},
-  {id:'cmds',   ic:'code',    c:'#5ec8ff', t:'Команды Sinumerik', s:'G, M, программирование'},
-  {id:'corr',   ic:'target',  c:'#ff6b73', t:'Корректоры', s:'пересчёт по промеру'},
-  {id:'wear',   ic:'stack',   c:'#4ad991', t:'Стойкость', s:'учёт наработки'},
-  {id:'check',  ic:'check',   c:'#4ad991', t:'Чек-лист', s:'перед запуском'},
-  {id:'refs',   ic:'book',    c:'#a9b8c8', t:'Шпаргалки', s:'крепёж, конусы, HB'},
-  {id:'hist',   ic:'history', c:'#a9b8c8', t:'История', s:'сохранённые расчёты'},
-  {id:'sources',ic:'link',    c:'#a9b8c8', t:'Источники', s:'ссылки и стандарты'},
-  {id:'updates',ic:'download', c:'#5ec8ff', t:'Обновления', s:'проверка версии'},
-  {id:'about',  ic:'user',    c:'#ffb454', t:'О приложении', s:'автор SuslikGT'}
+  {id:'speed',  ic:'gauge',   c:'#ffb454', g:'Расчёты', t:'Режимы резания', s:'обороты, подача, мощность'},
+  {id:'time',   ic:'clock',   c:'#5ec8ff', g:'Расчёты', t:'Время и стоимость', s:'машинное время, цена'},
+  {id:'geo',    ic:'shape',   c:'#4ad991', g:'Расчёты', t:'Геометрия и вес', s:'фаска, конус, масса'},
+  {id:'thread', ic:'thread',  c:'#c78bd8', g:'Расчёты', t:'Резьба и отверстия', s:'метрика, трубная, UNC'},
+  {id:'rough',  ic:'wave',    c:'#ffc75f', g:'Расчёты', t:'Шероховатость', s:'Ra ↔ подача, допуски'},
+  {id:'toler',  ic:'ruler',   c:'#9b8cff', g:'Расчёты', t:'Допуски и посадки', s:'14h14, 12h9, 4G10'},
+  {id:'insert', ic:'diamond', c:'#a9b8c8', g:'Инструмент', t:'Пластины ISO', s:'CNMG 120408 — разбор'},
+  {id:'holder', ic:'holder',  c:'#a9b8c8', g:'Инструмент', t:'Державки', s:'MCLNR 2525 M12'},
+  {id:'drill',  ic:'drill',   c:'#a9b8c8', g:'Инструмент', t:'Свёрла, метчики, фрезы', s:'обозначения'},
+  {id:'wear',   ic:'stack',   c:'#4ad991', g:'Инструмент', t:'Стойкость', s:'учёт наработки'},
+  {id:'machine',ic:'machine', c:'#5ec8ff', g:'Станок и ЧПУ', t:'Станок T65M II/750', s:'узлы, функции, приёмы'},
+  {id:'siemens',ic:'chip',    c:'#5ec8ff', g:'Станок и ЧПУ', t:'Sinumerik', s:'циклы, G-код, шаблон'},
+  {id:'cmds',   ic:'code',    c:'#5ec8ff', g:'Станок и ЧПУ', t:'Команды Sinumerik', s:'G, M, программирование'},
+  {id:'corr',   ic:'target',  c:'#ff6b73', g:'Станок и ЧПУ', t:'Корректоры', s:'пересчёт по промеру'},
+  {id:'metals', ic:'layers',  c:'#e09a63', g:'Справочники', t:'Марки сталей', s:'30ХГСА и другие'},
+  {id:'refs',   ic:'book',    c:'#a9b8c8', g:'Справочники', t:'Шпаргалки', s:'крепёж, конусы, HB'},
+  {id:'sources',ic:'link',    c:'#a9b8c8', g:'Справочники', t:'Источники', s:'ссылки и стандарты'},
+  {id:'check',  ic:'check',   c:'#4ad991', g:'Сервис', t:'Чек-лист', s:'перед запуском'},
+  {id:'hist',   ic:'history', c:'#a9b8c8', g:'Сервис', t:'История', s:'сохранённые расчёты'},
+  {id:'updates',ic:'download', c:'#5ec8ff', g:'Сервис', t:'Обновления', s:'проверка версии'},
+  {id:'about',  ic:'user',    c:'#ffb454', g:'Сервис', t:'О приложении', s:'автор SuslikGT'}
 ];
+const TILE_GROUPS = ['Расчёты', 'Инструмент', 'Станок и ЧПУ', 'Справочники', 'Сервис'];
+function cncInfo(){
+  const m = (typeof curMachine === 'function') ? curMachine() : null;
+  const id = (m && m.cncId) || 'siemens';
+  return (D.cnc && D.cnc[id]) ? D.cnc[id] : {id:'siemens', name:'SINUMERIK 828D', short:'Sinumerik'};
+}
 function tint(hex, a){
   const h = hex.replace('#', '');
   const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
   return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
 }
 function homeHTML(){
+  const mach = (typeof curMachine === 'function') ? curMachine() : {name:'T65M II/750', short:'T65M II/750', kind:'Токарный центр'};
+  const cnc = cncInfo();
   let out = '<div class="hero">' +
-    '<div class="kick">Sinumerik 828D · токарно-фрезерный</div>' +
+    '<div class="kick">' + cnc.name + ' · ' + mach.kind + '</div>' +
     '<h1>ЧПУ Оператор</h1>' +
-    '<p>T65M II/750 — расчёты, справочники и наладка офлайн</p>' +
+    '<p>' + mach.name + ' — расчёты, справочники и наладка офлайн</p>' +
     '<div class="acts">' +
       '<button data-go="speed">Режимы</button>' +
       '<button data-go="corr">Корректоры</button>' +
@@ -221,14 +228,25 @@ function homeHTML(){
       '<button data-go="cmds">Команды</button>' +
     '</div></div>';
   if(typeof updateBanner === 'function') out += updateBanner();
-  out += '<div class="grid">';
-  TILES.forEach(t => {
-    out += '<button class="tile" data-go="' + t.id + '">' +
-      '<span class="ic" style="color:' + t.c + ';background:' + tint(t.c, .13) +
-        ';border-color:' + tint(t.c, .26) + '">' + (ICONS[t.ic] || '') + '</span>' +
-      '<span><span class="cap">' + t.t + '</span><span class="sub">' + t.s + '</span></span></button>';
+  const hidden = mach.grind ? ['thread', 'insert', 'holder', 'drill'] : [];
+  TILE_GROUPS.forEach(g => {
+    const list = TILES.filter(t => (t.g || 'Сервис') === g && hidden.indexOf(t.id) < 0);
+    if(!list.length) return;
+    out += '<div class="h">' + g + '</div><div class="grid">';
+    list.forEach(t => {
+      let title = t.t, sub = t.s;
+      if(t.id === 'machine'){ title = mach.short; sub = mach.kind + ' · ' + cnc.short; }
+      else if(t.id === 'speed' && mach.grind){ title = 'Режимы шлифования'; sub = 'круг, обороты, подача'; }
+      else if(t.id === 'siemens'){ title = cnc.name; sub = 'циклы, G-код, шаблон'; }
+      else if(t.id === 'cmds'){ title = 'Команды ' + cnc.short; sub = 'G, M, программирование'; }
+      out += '<button class="tile" data-go="' + t.id + '">' +
+        '<span class="ic" style="color:' + t.c + ';background:' + tint(t.c, .13) +
+          ';border-color:' + tint(t.c, .26) + '">' + (ICONS[t.ic] || '') + '</span>' +
+        '<span><span class="cap">' + title + '</span><span class="sub">' + sub + '</span></span></button>';
+    });
+    out += '</div>';
   });
-  out += '</div><div class="note" style="margin-top:18px">Расчёты и таблицы — справочные. ' +
+  out += '<div class="note" style="margin-top:18px">Расчёты и таблицы — справочные. ' +
     'Перед запуском сверяйтесь с документацией станка и каталогом инструмента.</div>';
   const ver = (typeof appVersion === 'function') ? appVersion().name : '1.1';
   out += '<div class="footer"><span>© 2026 <b data-egg="1" style="color:#e3edf6">SuslikGT</b> · v' + ver + '</span>' +
@@ -242,7 +260,7 @@ function restoreInputs(screen){
   $$('#view input[id], #view select[id]').forEach(el => {
     if(el.dataset.nosave) return;
     const v = lsGet(keyFor(screen, el.id), null);
-    if(v !== null) el.value = v;
+    if(v !== null && v !== '') el.value = v;
   });
 }
 function bindInputs(){
@@ -276,6 +294,8 @@ function clearHist(){ lsSet('hist', []); }
 function start(){
   $('back').addEventListener('click', backNav);
   $('home').addEventListener('click', homeNav);
+  const mb = $('mach');
+  if(mb) mb.addEventListener('click', () => go('machines'));
   bindInputs();
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-go]');

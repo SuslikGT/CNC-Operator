@@ -93,6 +93,21 @@ public class MainActivity extends Activity {
         }
 
         web.loadUrl("file:///android_asset/www/index.html");
+
+        askNotifications();
+        UpdateSchedule.arm(this);
+        UpdateCheck.check(this);
+    }
+
+    private void askNotifications() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                checkSelfPermission("android.permission.POST_NOTIFICATIONS")
+                        != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            try {
+                requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 1);
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     @Override

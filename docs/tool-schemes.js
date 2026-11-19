@@ -49,6 +49,24 @@ function shapePts(shape, cx, cy, r){
 function hasHole(clamp){ return 'MGTW'.indexOf(clamp) >= 0 || clamp === 'A' || clamp === 'F'; }
 
 /* ---------- пластина ---------- */
+/* Скругление всех углов многоугольника радиусом при вершине */
+function polyRoundedAll(pts, rr){
+  const n = pts.length;
+  const f = p => p[0].toFixed(1) + ',' + p[1].toFixed(1);
+  const len = (P, Q) => Math.hypot(Q[0] - P[0], Q[1] - P[1]) || 1;
+  const along = (P, Q, d) => {
+    const L = len(P, Q);
+    return [P[0] + (Q[0] - P[0]) / L * d, P[1] + (Q[1] - P[1]) / L * d];
+  };
+  let d = '';
+  for(let i = 0; i < n; i++){
+    const V = pts[i], A = pts[(i - 1 + n) % n], B = pts[(i + 1) % n];
+    const rA = Math.min(rr, len(V, A) * 0.45), rB = Math.min(rr, len(V, B) * 0.45);
+    const p1 = along(V, A, rA), p2 = along(V, B, rB);
+    d += (i === 0 ? 'M' : 'L') + f(p1) + ' Q' + f(V) + ' ' + f(p2);
+  }
+  return d + ' Z';
+}
 function renderInsertSvg(code){
   const raw = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   const m = raw.match(/^([A-Z]{4})(\d{2})([0-9A-Z]{2})(\d{2})/);
@@ -61,14 +79,17 @@ function renderInsertSvg(code){
   const s = 78 / icMm;                       // px на мм для вида сверху
   const cx = 96, cy = 108;
   const r = icMm * s / 1.7;
-  const rp = Math.max(5, (rMm || 0.4) * s * 2.4);
+  const rp = Math.max(1.6, Math.min(3.2, (rMm || 0.4) * s * 0.4));
   const pts = shapePts(shape, cx, cy, r);
   const isRound = shape === 'R';
+  const cornerIdx = 1;
+  const fillet = isRound ? 0 : Math.max(1.5, (rMm || 0.4) * s);
+  const pathD = isRound ? '' : (fillet ? polyRoundedAll(pts, fillet) : polyD(pts));
   const body = isRound
     ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + r.toFixed(1) + '" fill="url(#ins-am)" stroke="#ffb454" stroke-width="1"/>'
-    : '<path d="' + polyD(pts) + '" fill="#ffb454" stroke="#ffb454" stroke-width="' + (rp * 2).toFixed(1) +
-      '" stroke-linejoin="round"/>' +
-      '<path d="' + polyD(pts) + '" fill="none" stroke="#ffd79a" stroke-width="1" opacity=".55"/>';
+    : '<path d="' + pathD + '" fill="#ffb454" stroke="#ff8a2b" stroke-width="' + rp.toFixed(1) + '"' +
+      ' stroke-linejoin="round"/>' +
+      '<path d="' + pathD + '" fill="none" stroke="#ffd79a" stroke-width="1" opacity=".55"/>';
   const hole = hasHole(L[3])
     ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r * 0.26).toFixed(1) + '" fill="#0E1318" stroke="#0E1318"/>'
     : '';
@@ -80,20 +101,15 @@ function renderInsertSvg(code){
       ' h-' + sideW.toFixed(0) + ' Z" fill="#ffb454" opacity=".85"/>' +
       '<text class="calc" x="' + (sideX + 4) + '" y="' + (sideY - 6) + '">' + fmt(thMm, 2) + ' мм</text>'
     : '';
-  const vx = cx + r * (shape === 'S' || shape === 'L' ? 1 : 0.84);
-  const radiusMark = isRound ? '' :
-    '<path class="dim" d="M' + vx.toFixed(1) + ',' + cy + ' L' + (vx + 14).toFixed(1) + ',' + (cy - 22) +
-      ' h8"/>' +
-    '<text class="hint" x="' + (vx + 26).toFixed(1) + '" y="' + (cy - 24) + '">r ' +
-      (rMm !== undefined ? fmt(rMm, 2) : '—') + '</text>';
   return '<svg viewBox="0 0 320 190">' +
     '<defs><linearGradient id="ins-am" x1="0" y1="0" x2="1" y2="1">' +
     '<stop offset="0" stop-color="#FFC873"/><stop offset="1" stop-color="#FF8A2B"/></linearGradient></defs>' +
     body + hole + side +
     '<text x="' + cx + '" y="' + (cy - r - 16) + '" text-anchor="middle" class="calc">' +
       (D.insertShapes[shape] ? D.insertShapes[shape].name : 'форма ' + shape) + '</text>' +
-    '<text x="' + cx + '" y="' + (cy + r + 22) + '" text-anchor="middle">IC ' + fmt(icMm, 2) + ' мм</text>' +
-    radiusMark +
+    '<text x="' + cx + '" y="' + (cy + r + 24) + '" text-anchor="middle" class="calc">r ' +
+      (rMm !== undefined ? fmt(rMm, 2) : '—') + ' мм</text>' +
+    '<text class="hint" x="8" y="' + (cy + r + 24) + '">IC ' + fmt(icMm, 2) + ' мм</text>' +
     '<text class="hint" x="' + (sideX + sideW / 2) + '" y="' + (cy + sideH / 2 + 22) + '" text-anchor="middle">торец</text>' +
     '</svg>';
 }
