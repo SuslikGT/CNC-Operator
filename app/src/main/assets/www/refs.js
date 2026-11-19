@@ -166,11 +166,17 @@ function crCalc(){
 SCREENS.wear = {
   title: 'Стойкость инструмента',
   render(){
+    const m = (typeof curMachine === 'function') ? curMachine() : null;
+    const grind = !!(m && m.grind);
     return '<div class="card">' +
-      fld('wr_name', 'Инструмент / пластина', '', 'например: T1 CNMG 120408', {ph:'название'}) +
-      '<div class="row2">' + fld('wr_limit', 'Ресурс', '15', 'мин/шт') +
+      fld('wr_name', grind ? 'Круг / правка' : 'Инструмент / пластина', '',
+        grind ? 'круг 455×127, правка алмазом' : 'например: T1 CNMG 120408', {ph:'название'}) +
+      '<div class="row2">' + fld('wr_limit', grind ? 'Правок до замены' : 'Ресурс', grind ? '20' : '15',
+        grind ? 'правок' : 'мин/шт') +
       '<label class="f"><span>Единица</span><div class="iw"><select class="inp" id="wr_unit">' +
       '<option value="мин">минут</option><option value="дет">деталей</option></select></div></label></div>' +
+      (grind ? '<div class="note" style="margin-top:8px">Для шлифования ресурс считают по правкам: ' +
+        'правка перед чистовым проходом, круг держит 20–30 правок. Отмечайте по одной после каждой правки.</div>' : '') +
       '<button class="btn pri" type="button" id="wr_add">Добавить инструмент</button></div>' +
       '<div class="h">Учёт</div><div id="wr_list"></div>';
   },
@@ -224,7 +230,7 @@ function drawWear(){
 }
 
 /* ================= ЧЕК-ЛИСТ ================= */
-const CHECK_ITEMS = [
+const CHECK_LATHE = [
   'Программа проверена в симуляции стойки',
   'Нулевые точки G54 совпадают с базой детали',
   'Все инструменты привязаны, корректоры D введены',
@@ -238,28 +244,56 @@ const CHECK_ITEMS = [
   'Стружка убрана, дверь закрыта, защита на месте',
   'Кнопка аварийного останова проверена'
 ];
+const CHECK_GRIND = [
+  'Круг осмотрен: трещин и сколов нет, посадочный диаметр цел',
+  'Круг установлен, фланцы затянуты без перекоса, прокладки на месте',
+  'Круг отбалансирован, биение после правки не больше 0,01 мм',
+  'Правка алмазом выполнена, кромка круга открыта',
+  'Обороты круга не выше паспортных — 1900 об/мин для ⌀455 мм',
+  'СОЖ: бак полный, фильтр чистый, сопло в зону контакта',
+  'Деталь в центрах или патроне, люнет выставлен по размеру',
+  'Биение детали проверено, припуск под чистовой оставлен',
+  'Нулевые точки X и Z привязаны, корректоры круга введены',
+  'Первый проход — половина подачи, промер после выхаживания',
+  'Перед чистовым — правка круга, выхаживание 2–5 проходов',
+  'Кожух круга и дверь закрыты, аварийный останов проверен'
+];
+function checkItems(){
+  const m = (typeof curMachine === 'function') ? curMachine() : null;
+  if(m && Array.isArray(m.check) && m.check.length) return m.check;
+  return (m && m.grind) ? CHECK_GRIND : CHECK_LATHE;
+}
+function checkStore(){
+  const m = (typeof curMachine === 'function') ? curMachine() : null;
+  return 'chk.' + ((m && m.id) || 'default');
+}
 SCREENS.check = {
   title: 'Чек-лист',
   render(){
-    const st = lsGet('chk', {});
-    let h = '<div class="card">';
-    CHECK_ITEMS.forEach((t, i) => {
+    const items = checkItems();
+    const m = (typeof curMachine === 'function') ? curMachine() : null;
+    const st = lsGet(checkStore(), {});
+    let h = '<div class="card"><div class="kick">' + esc((m && m.short) || 'станок') + '</div>' +
+      '<div class="mini" style="margin-top:4px">' + items.length + ' пунктов перед запуском</div></div>' +
+      '<div class="card">';
+    items.forEach((t, i) => {
       const on = !!st[i];
       h += '<label class="chk"><input type="checkbox" data-chk="' + i + '"' + (on ? ' checked' : '') + '>' +
         '<span class="' + (on ? 'on' : '') + '">' + t + '</span></label>';
     });
     h += '</div><button class="btn ghost" type="button" id="chk_reset">Сбросить все отметки</button>' +
-      '<div class="note">Отметки сохраняются в телефоне. Перед новой наладкой — сброс.</div>';
+      '<div class="note">Отметки сохраняются в телефоне отдельно для каждого станка. Перед новой наладкой — сброс.</div>';
     return h;
   },
   mount(){
+    const key = checkStore();
     $$('[data-chk]').forEach(el => el.addEventListener('change', () => {
-      const st = lsGet('chk', {});
+      const st = lsGet(key, {});
       st[el.dataset.chk] = el.checked;
-      lsSet('chk', st);
+      lsSet(key, st);
       el.nextElementSibling.classList.toggle('on', el.checked);
     }));
-    $('chk_reset').addEventListener('click', () => { lsSet('chk', {}); paint(); toast('Отметки сброшены'); });
+    $('chk_reset').addEventListener('click', () => { lsSet(key, {}); paint(); toast('Отметки сброшены'); });
   }
 };
 

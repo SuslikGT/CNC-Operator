@@ -110,10 +110,65 @@ function tolDeviation(size, letter, grade, hole, it){
   }
   return {ei: ei, es: es, range: rg.r, hole: false};
 }
+function tolDevParse(text){
+  const raw = String(text || '').trim();
+  const s = raw.replace(/\s+/g, '').replace(/,/g, '.');
+  const m = s.match(/^(\d+(?:\.\d+)?)((?:[+\-±]\d+(?:\.\d+)?){1,2})$/);
+  if(!m) return null;
+  const size = parseFloat(m[1]);
+  if(!(size > 0)) return null;
+  const parts = m[2].match(/[+\-±]\d+(?:\.\d+)?/g) || [];
+  let es = null, ei = null;
+  if(parts.length === 1 && parts[0].charAt(0) === '±'){
+    const v = Math.abs(parseFloat(parts[0].slice(1)));
+    es = v; ei = -v;
+  } else if(parts.length === 2){
+    es = parseFloat(parts[0]);
+    ei = parseFloat(parts[1]);
+  } else {
+    return {bad: 'dev', raw: raw};
+  }
+  if(!isFinite(es) || !isFinite(ei)) return {bad: 'dev', raw: raw};
+  let swapped = false;
+  if(es < ei){ const t = es; es = ei; ei = t; swapped = true; }
+  if(Math.abs(es) >= size || Math.abs(ei) >= size) return {bad: 'range', raw: raw};
+  return {size: size, es: es, ei: ei, raw: raw, swapped: swapped};
+}
 function tolCalc(){
   const out = $('tol_out');
   if(!out) return;
-  const p = tolParse(val('tol_q'));
+  const text = val('tol_q');
+  const mm = v => {
+    const fourth = Math.abs(v * 1000 - Math.round(v * 1000)) > 1e-6;
+    return fmt(v, fourth ? 4 : 3);
+  };
+  const sign = v => (v > 0 ? '+' : v < 0 ? '−' : '') + mm(Math.abs(v));
+
+  const dev = tolDevParse(text);
+  if(dev && dev.bad){
+    out.innerHTML = dev.bad === 'range'
+      ? '<div class="warn">Отклонения больше самого размера. Проверьте запись: <b>40-0,2-0,45</b>.</div>'
+      : '<div class="warn">Нужны два отклонения или «±». Примеры: <b>40-0,2-0,45</b>, <b>40+0,1-0,05</b>, ' +
+        '<b>40±0,1</b>.</div>';
+    return;
+  }
+  if(dev){
+    const max = dev.size + dev.es, min = dev.size + dev.ei;
+    const mid = (max + min) / 2;
+    out.innerHTML =
+      rbox('Верхнее отклонение', sign(dev.es), 'мм', dev.es > 0 ? 'good' : '') +
+      rbox('Нижнее отклонение', sign(dev.ei), 'мм', dev.ei < 0 ? 'bad' : '') +
+      rbox('Поле допуска', fmt0((dev.es - dev.ei) * 1000), 'мкм') +
+      rbox('Наибольший размер', mm(max), 'мм') +
+      rbox('Наименьший размер', mm(min), 'мм') +
+      rbox('Средний размер', mm(mid), 'мм', 'good') +
+      '<div class="note" style="grid-column:1/-1">Задано отклонениями: <b>' + esc(dev.raw) + '</b>. ' +
+        'Настройка по среднему размеру: ' + mm(mid) + ' мм.' +
+        (dev.swapped ? ' Отклонения переставлены — верхнее должно быть больше нижнего.' : '') + '</div>';
+    return;
+  }
+
+  const p = tolParse(text);
   if(!p || p.bad){
     if(p && p.bad === 'letter'){
       out.innerHTML = '<div class="warn">Буква <b>' + esc(p.letter) + '</b> в этом разделе не считается: ' +
@@ -125,8 +180,8 @@ function tolCalc(){
         'В разделе есть квалитеты IT5…IT18.</div>';
       return;
     }
-    out.innerHTML = '<div class="warn">Введите обозначение: размер + буква + квалитет. ' +
-      'Например: <b>14h14</b>, <b>12h9</b>, <b>4G10</b>, <b>30H7</b>, <b>25js6</b>.</div>';
+    out.innerHTML = '<div class="warn">Введите размер с буквой и квалитетом либо с отклонениями. ' +
+      'Примеры: <b>14h14</b>, <b>12h9</b>, <b>4G10</b>, <b>40-0,2-0,45</b>, <b>40±0,1</b>.</div>';
     return;
   }
   const rg = tolRange(p.size);
@@ -139,11 +194,6 @@ function tolCalc(){
   }
   const es = d.es / 1000, ei = d.ei / 1000;
   const max = p.size + es, min = p.size + ei;
-  const mm = v => {
-    const fourth = Math.abs(v * 1000 - Math.round(v * 1000)) > 1e-6;
-    return fmt(v, fourth ? 4 : 3);
-  };
-  const sign = v => (v > 0 ? '+' : v < 0 ? '−' : '') + mm(Math.abs(v));
   const kind = p.hole ? 'отверстие' : 'вал';
   out.innerHTML =
     rbox('Допуск IT' + p.grade, fmt0(it), 'мкм', 'lead') +
@@ -179,9 +229,9 @@ SCREENS.toler = {
       return h + '</table></div>';
     };
     return '<div class="card">' +
-        fld('tol_q', 'Обозначение допуска', '14h14', '', {ph: '14h14, 12h9, 4G10', text: true}) +
+        fld('tol_q', 'Размер с допуском', '14h14', '', {ph: '14h14 или 40-0,2-0,45', text: true}) +
         '<div class="mini" style="margin:2px 2px 10px">' +
-          ['14h14','12h9','4G10','30H7','25js6','40k6','20n7'].map(x =>
+          ['14h14','12h9','4G10','30H7','25js6','40-0,2-0,45','40±0,1'].map(x =>
             '<span class="pill" data-tol="' + x + '">' + x + '</span>').join('') + '</div>' +
         '<div class="res" id="tol_out"></div>' +
       '</div>' +

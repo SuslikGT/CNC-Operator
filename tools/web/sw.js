@@ -18,6 +18,7 @@ const ASSETS = [
   'sources.js',
   'updates.js',
   'about.js',
+  'license.js',
   'bugreport.js',
   'arcade.js',
   'metrika.js',

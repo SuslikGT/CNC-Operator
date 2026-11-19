@@ -10,8 +10,8 @@ android {
         applicationId 'ru.cnc.operator'
         minSdk 24
         targetSdk 34
-        versionCode 28
-        versionName '2.0.21'
+        versionCode 31
+        versionName '2.0.24'
     }
 
     signingConfigs {
@@ -30,8 +30,9 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
     }

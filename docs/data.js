@@ -373,6 +373,11 @@ D.machines = [
    ]},
   {id:'okamoto', name:'Okamoto Grind-X OGM-3150UNCIII', short:'OGM-3150UNCIII',
    kind:'Круглошлифовальный с ЧПУ', cnc:'Fanuc 0i-TF', cncId:'fanuc', grind:true,
+   labels:{
+     wear:['Стойкость круга','правки и износ'],
+     rough:['Шероховатость','Ra после шлифования'],
+     toler:['Допуски и посадки','40-0,2-0,45 или 14h14']
+   },
    notes:'Универсальный прецизионный круглошлифовальный станок, серия OGM-UNCIII. ' +
      'Опция — устройство внутреннего шлифования.',
    specs:[

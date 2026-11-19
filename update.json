@@ -1,6 +1,6 @@
 {
-    "url":  "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-2.0.21.apk",
-    "versionCode":  28,
-    "version":  "2.0.21",
-    "notes":  "Возврат на главную после выбора станка. Системные уведомления о новых версиях (раз в сутки, в фоне). Подключена статистика посещений. Исправления шлифовки, режимов и таблиц."
+    "url":  "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-2.0.24.apk",
+    "versionCode":  31,
+    "version":  "2.0.24",
+    "notes":  "Лицензионное соглашение. Допуски по отклонениям: 40-0,2-0,45 со средним размером. Свой чек-лист и разделы под каждый станок. Ускорение работы кода."
 }

@@ -1,8 +1,8 @@
 /* Ядро: роутер, хранилище, помощники */
 const SCREENS = {};
 window.SCREENS = SCREENS;
-const APP_VERSION = '2.0.21';
-const APP_VERSION_CODE = 28;
+const APP_VERSION = '2.0.24';
+const APP_VERSION_CODE = 31;
 const $ = id => document.getElementById(id);
 const $$ = sel => Array.prototype.slice.call(document.querySelectorAll(sel));
 
@@ -186,7 +186,7 @@ const TILES = [
   {id:'geo',    ic:'shape',   c:'#4ad991', g:'Расчёты', t:'Геометрия и вес', s:'фаска, конус, масса'},
   {id:'thread', ic:'thread',  c:'#c78bd8', g:'Расчёты', t:'Резьба и отверстия', s:'метрика, трубная, UNC'},
   {id:'rough',  ic:'wave',    c:'#ffc75f', g:'Расчёты', t:'Шероховатость', s:'Ra ↔ подача, допуски'},
-  {id:'toler',  ic:'ruler',   c:'#9b8cff', g:'Расчёты', t:'Допуски и посадки', s:'14h14, 12h9, 4G10'},
+  {id:'toler',  ic:'ruler',   c:'#9b8cff', g:'Расчёты', t:'Допуски и посадки', s:'14h14 или 40-0,2-0,45'},
   {id:'insert', ic:'diamond', c:'#a9b8c8', g:'Инструмент', t:'Пластины ISO', s:'CNMG 120408 — разбор'},
   {id:'holder', ic:'holder',  c:'#a9b8c8', g:'Инструмент', t:'Державки', s:'MCLNR 2525 M12'},
   {id:'drill',  ic:'drill',   c:'#a9b8c8', g:'Инструмент', t:'Свёрла, метчики, фрезы', s:'обозначения'},
@@ -239,6 +239,8 @@ function homeHTML(){
       else if(t.id === 'speed' && mach.grind){ title = 'Режимы шлифования'; sub = 'круг, обороты, подача'; }
       else if(t.id === 'siemens'){ title = cnc.name; sub = 'циклы, G-код, шаблон'; }
       else if(t.id === 'cmds'){ title = 'Команды ' + cnc.short; sub = 'G, M, программирование'; }
+      const lb = mach.labels && mach.labels[t.id];
+      if(lb){ title = lb[0] || lb.t || title; sub = lb[1] || lb.s || sub; }
       out += '<button class="tile" data-go="' + t.id + '">' +
         '<span class="ic" style="color:' + t.c + ';background:' + tint(t.c, .13) +
           ';border-color:' + tint(t.c, .26) + '">' + (ICONS[t.ic] || '') + '</span>' +
