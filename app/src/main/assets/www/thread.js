@@ -109,15 +109,18 @@ function thApply(){
   thCalc();
 }
 let thRows = [];
+function threadProfile(type, P){
+  const acTrap = P <= 1.5 ? 0.15 : (P <= 4 ? 0.25 : (P <= 12 ? 0.5 : 1.0));
+  if(type === 'trap') return {k2: 0.5, k1: 1.0, k3: 1.0, H: 1.866, h: 0.5, name: '30°', ac: acTrap};
+  if(type === 'pipe') return {k2: 0.6403, k1: 1.2806, k3: 1.2806, H: 0.960, h: 0.6403, name: '55°'};
+  return {k2: 0.6495, k1: 1.0825, k3: 1.2269, H: 0.866, h: 0.6134, name: '60°'};
+}
 function thCalc(){
   const out = $('th_out'); if(!out) return;
   const d = num('th_d', 0), P = num('th_p', 0);
   if(!(d > 0) || !(P > 0)){ out.innerHTML = '<div class="note" style="grid-column:1/-1">Введите диаметр и шаг</div>'; return; }
   const type = segVal('th_type') || 'metric';
-  const acTrap = P <= 1.5 ? 0.15 : (P <= 4 ? 0.25 : (P <= 12 ? 0.5 : 1.0));
-  const prof = type === 'trap' ? {k2: 0.5, k1: 1.0, k3: 1.0, H: 1.866, h: 0.5, name: '30°', ac: acTrap}
-    : type === 'pipe' ? {k2: 0.6403, k1: 1.2806, k3: 1.2806, H: 0.960, h: 0.6403, name: '55°'}
-    : {k2: 0.6495, k1: 1.0825, k3: 1.2269, H: 0.866, h: 0.6134, name: '60°'};
+  const prof = threadProfile(type, P);
   const d2 = d - prof.k2 * P;
   const d1 = d - prof.k1 * P;
   const d3 = prof.ac ? d - P - 2 * prof.ac : d - prof.k3 * P;
@@ -134,7 +137,7 @@ function thCalc(){
     n = Math.round(1000 * vc / (Math.PI * d));
   }
   const sv = $('th_svg');
-  if(sv) animScheme('thread', sv, [d, P], renderThread);
+  if(sv) animScheme('thread', sv, [d, P], v => renderThread(v, threadProfile(type, v[1])));
   const depth = h3;
   const cut = num('th_cut', 0.1);
   const passes = cut > 0 ? Math.ceil(depth / cut) : NaN;

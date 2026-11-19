@@ -129,7 +129,8 @@ function renderFillet(v){
 }
 
 /* ---------- профиль резьбы ---------- */
-function renderThread(v){
+function renderThread(v, prof){
+  prof = prof || {k2: 0.6495, k1: 1.0825, k3: 1.2269, name: '60°'};
   const d = v[0], P = v[1];
   if(!(d > 0) || !(P > 0)) return emptyScheme('Введите диаметр и шаг резьбы');
   const W = 340, x0 = 24, x1 = 224, turns = 3;
@@ -146,9 +147,11 @@ function renderThread(v){
     p += ' L' + n1(x + pitch * 0.78) + ',' + n1(crestY);
     p += ' L' + n1(x + pitch) + ',' + n1(crestY);
   }
-  const d2 = d - 0.6495 * P, d1 = d - 1.0825 * P;
+  const d2 = d - prof.k2 * P, d1 = d - prof.k1 * P;
+  const d3 = prof.ac ? d - P - 2 * prof.ac : d - prof.k3 * P;
   const lx = x1 + 12;
   const y2 = cy - depth * 0.16;
+  const y3 = rootY + 16;
   const bodyBottom = rootY + 26;
   return '<svg viewBox="0 0 ' + W + ' 170">' +
     '<path class="part" d="' + p + ' L' + n1(x1) + ',' + n1(bodyBottom) + ' L' + x0 + ',' + n1(bodyBottom) + ' Z"/>' +
@@ -156,10 +159,12 @@ function renderThread(v){
     '<path class="dim" d="M' + n1(x0 + 4) + ',' + n1(crestY) + 'H' + n1(lx - 6) + '"/>' +
     '<path class="dim" d="M' + n1(x0 + 4) + ',' + n1(y2) + 'H' + n1(lx - 6) + '"/>' +
     '<path class="dim" d="M' + n1(x0 + 4) + ',' + n1(rootY) + 'H' + n1(lx - 6) + '"/>' +
+    '<path class="dim" d="M' + n1(x0 + 4) + ',' + n1(y3) + 'H' + n1(lx - 6) + '"/>' +
     '<text class="calc" x="' + lx + '" y="' + n1(crestY + 4) + '">d ' + fmt(d, 2) + '</text>' +
     '<text x="' + lx + '" y="' + n1(y2 + 4) + '">d2 ' + fmt(d2, 2) + '</text>' +
     '<text x="' + lx + '" y="' + n1(rootY + 4) + '">d1 ' + fmt(d1, 2) + '</text>' +
+    '<text x="' + lx + '" y="' + n1(y3 + 4) + '">d3 ' + fmt(d3, 2) + '</text>' +
     dimH(x0, x0 + pitch, bodyBottom + 16, 'P ' + fmt(P, 2)) +
-    '<text class="hint" x="' + x0 + '" y="162">3 витка, профиль схематично</text>' +
+    '<text class="hint" x="' + x0 + '" y="162">3 витка, ' + prof.name + ', профиль схематично</text>' +
     '</svg>';
 }

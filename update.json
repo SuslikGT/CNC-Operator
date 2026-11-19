@@ -1,6 +1,6 @@
 {
-    "url":  "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-2.0.24.apk",
-    "versionCode":  31,
-    "version":  "2.0.24",
-    "notes":  "Лицензионное соглашение. Допуски по отклонениям: 40-0,2-0,45 со средним размером. Свой чек-лист и разделы под каждый станок. Ускорение работы кода."
+    "url":  "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-2.0.25.apk",
+    "versionCode":  32,
+    "version":  "2.0.25",
+    "notes":  "Схема резьбы: d2, d1 и d3 теперь считаются по профилю — метрическая 60°, трубная 55°, трапецеидальная 30°. Проверены все разделы и расчёты."
 }

@@ -1,5 +1,5 @@
 /* Офлайн-кэш веб-версии «ЧПУ Оператор» */
-const CACHE = 'cnc-operator-2.0.24';
+const CACHE = 'cnc-operator-2.0.25';
 const ASSETS = [
   './',
   'index.html',
