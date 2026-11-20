@@ -8,6 +8,7 @@ function arcDiff(){
   return ARC_DIFF_NAMES[d] ? d : 'medium';
 }
 function arcDiffSet(d){ if(ARC_DIFF_NAMES[d]) lsSet('arcade.diff', d); }
+function arcKey(game){ return game + '|' + arcDiff(); }
 function arcBestOf(game){
   const b = arcBest();
   const v = b[game + '|' + arcDiff()];

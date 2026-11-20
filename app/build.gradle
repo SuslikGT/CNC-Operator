@@ -10,8 +10,8 @@ android {
         applicationId 'ru.cnc.operator'
         minSdk 24
         targetSdk 34
-        versionCode 40
-        versionName '2.0.33'
+        versionCode 42
+        versionName '2.0.35'
     }
 
     signingConfigs {

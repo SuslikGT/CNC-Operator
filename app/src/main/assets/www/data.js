@@ -347,7 +347,7 @@ D.machines = [
   {id:'t65m', name:'Headman T65M II/750', short:'T65M II/750', kind:'Токарный центр',
    cnc:'Sinumerik 828D', cncId:'siemens', custom:true,
    limits:{nMax:4000, nChuck:3500, power:22, chuck:'10"', bar:80}},
-  {id:'cum', name:'Ace Micromatic CUM LM 1712', short:'CUM LM 1712', kind:'Токарный с ЧПУ',
+  {id:'cum', name:'Ace Micromatic CUB LM 1712', short:'CUB LM 1712', kind:'Токарный с ЧПУ',
    cnc:'Siemens 828D', cncId:'siemens', year:'2023',
    limits:{nMax:4000, nChuck:3000, power:11, chuck:'8"', bar:52},
    notes:'Паспорт и таблица характеристик этой модели в открытых источниках не найдены: Ace Micromatic ' +
@@ -355,7 +355,7 @@ D.machines = [
      'Пришлите фото шильдика или страницу паспорта — внесу точные параметры.',
    specs:[
      ['Производитель','Ace Micromatic Group (Индия, Бангалор, с 1979 г.)'],
-     ['Модель','CUM LM 1712, 2023 г.'],
+     ['Модель','CUB LM 1712, 2023 г.'],
      ['Тип','токарный с ЧПУ, серия LM'],
      ['Стойка','Siemens Sinumerik 828D'],
      ['Диапазон параметров серии','диаметр обработки до Ø200–400 мм, шпиндель до 4000–7000 об/мин (зависит от модели)'],

@@ -1,8 +1,8 @@
 /* Ядро: роутер, хранилище, помощники */
 const SCREENS = {};
 window.SCREENS = SCREENS;
-const APP_VERSION = '2.0.33';
-const APP_VERSION_CODE = 40;
+const APP_VERSION = '2.0.35';
+const APP_VERSION_CODE = 42;
 const $ = id => document.getElementById(id);
 const $$ = sel => Array.prototype.slice.call(document.querySelectorAll(sel));
 

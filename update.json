@@ -1,6 +1,6 @@
 {
-    "url":  "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-2.0.33.apk",
-    "versionCode":  40,
-    "version":  "2.0.33",
-    "notes":  "История обновлений с датами. Контур детали: точки, эскиз и программа под Sinumerik, Fanuc и OSP. Игра «Детали» три в ряд с анимацией падения. Три уровня сложности в играх."
+    "url":  "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-2.0.35.apk",
+    "versionCode":  42,
+    "version":  "2.0.35",
+    "notes":  "Исправлено сохранение рекордов в играх. Станок Ace Micromatic CUB LM 1712 (было CUM)."
 }

@@ -1,5 +1,5 @@
 ﻿/* РћС„Р»Р°Р№РЅ-РєСЌС€ РІРµР±-РІРµСЂСЃРёРё В«Р§РџРЈ РћРїРµСЂР°С‚РѕСЂВ» */
-const CACHE = 'cnc-operator-2.0.33';
+const CACHE = 'cnc-operator-2.0.35';
 const ASSETS = [
   './',
   'index.html',
