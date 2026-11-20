@@ -37,6 +37,12 @@
           '<li>Без интернета приложение продолжает работать — данные уже сохранены в телефоне.</li>' +
         '</ul>' +
         '<button class="btn pri" type="button" id="web_reload">Обновить страницу</button></div>' +
+        ((typeof CHANGELOG !== 'undefined') ?
+          '<div class="h">История обновлений</div>' +
+          CHANGELOG.map(r => '<div class="card"><div style="display:flex;justify-content:space-between;gap:10px">' +
+            '<div style="font-weight:600">Версия ' + esc(r[0]) + '</div>' +
+            '<div class="mini" style="white-space:nowrap">' + esc(r[1]) + '</div></div>' +
+            '<div class="mini" style="margin-top:4px">' + esc(r[2]) + '</div></div>').join('') : '') +
         '<div class="note">Версия для Android с установщиком APK распространяется в разделе Releases репозитория.</div>';
     },
     mount(){

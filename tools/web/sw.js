@@ -1,4 +1,4 @@
-/* Офлайн-кэш веб-версии «ЧПУ Оператор» */
+﻿/* РћС„Р»Р°Р№РЅ-РєСЌС€ РІРµР±-РІРµСЂСЃРёРё В«Р§РџРЈ РћРїРµСЂР°С‚РѕСЂВ» */
 const CACHE = 'cnc-operator-__VERSION__';
 const ASSETS = [
   './',
@@ -18,6 +18,7 @@ const ASSETS = [
   'fanuc.js',
   'grind.js',
   'osp.js',
+  'contour.js',
   'sources.js',
   'updates.js',
   'about.js',

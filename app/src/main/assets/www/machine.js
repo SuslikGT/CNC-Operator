@@ -5,6 +5,10 @@ function curMachine(){
   return D.machines.find(m => m.id === id) || D.machines[0];
 }
 function setMachine(id){ lsSet('machine.sel', id); }
+function machLimits(){
+  const m = (typeof curMachine === 'function') ? curMachine() : null;
+  return (m && m.limits) ? m.limits : {};
+}
 function machKV(r){ return '<div class="kv"><span class="k">' + r[0] + '</span><span class="v">' + r[1] + '</span></div>'; }
 function machGeneric(m){
   let h = '<div class="hero" style="margin-bottom:14px">' +

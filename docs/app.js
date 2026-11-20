@@ -1,8 +1,8 @@
 /* Ядро: роутер, хранилище, помощники */
 const SCREENS = {};
 window.SCREENS = SCREENS;
-const APP_VERSION = '2.0.26';
-const APP_VERSION_CODE = 33;
+const APP_VERSION = '2.0.33';
+const APP_VERSION_CODE = 40;
 const $ = id => document.getElementById(id);
 const $$ = sel => Array.prototype.slice.call(document.querySelectorAll(sel));
 
@@ -187,6 +187,7 @@ const TILES = [
   {id:'thread', ic:'thread',  c:'#c78bd8', g:'Расчёты', t:'Резьба и отверстия', s:'метрика, трубная, UNC'},
   {id:'rough',  ic:'wave',    c:'#ffc75f', g:'Расчёты', t:'Шероховатость', s:'Ra ↔ подача, допуски'},
   {id:'toler',  ic:'ruler',   c:'#9b8cff', g:'Расчёты', t:'Допуски и посадки', s:'14h14 или 40-0,2-0,45'},
+  {id:'contour',ic:'shape',   c:'#5ec8ff', g:'Расчёты', t:'Контур детали', s:'точки → программа'},
   {id:'insert', ic:'diamond', c:'#a9b8c8', g:'Инструмент', t:'Пластины ISO', s:'CNMG 120408 — разбор'},
   {id:'holder', ic:'holder',  c:'#a9b8c8', g:'Инструмент', t:'Державки', s:'MCLNR 2525 M12'},
   {id:'drill',  ic:'drill',   c:'#a9b8c8', g:'Инструмент', t:'Свёрла, метчики, фрезы', s:'обозначения'},
@@ -228,7 +229,7 @@ function homeHTML(){
       '<button data-go="cmds">Команды</button>' +
     '</div></div>';
   if(typeof updateBanner === 'function') out += updateBanner();
-  const hidden = mach.grind ? ['thread', 'insert', 'holder', 'drill'] : [];
+  const hidden = mach.grind ? ['thread', 'insert', 'holder', 'drill', 'contour'] : [];
   TILE_GROUPS.forEach(g => {
     const list = TILES.filter(t => (t.g || 'Сервис') === g && hidden.indexOf(t.id) < 0);
     if(!list.length) return;

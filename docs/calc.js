@@ -63,7 +63,11 @@ SCREENS.speed = {
         fld('sp_z', 'Число зубьев z', '4', 'шт') +
         fld('sp_ae', 'Ширина ae', '8', 'мм') +
       '</div>' +
-      fld('sp_p', 'Мощность привода шпинделя', '11', 'кВт') +
+      fld('sp_p', 'Мощность привода шпинделя', String((machLimits().power || 11)), 'кВт') +
+      '<div class="mini" style="margin:-4px 2px 8px">Лимиты станка: до ' +
+        fmt0(machLimits().nMax || 4000) + ' об/мин, привод ' +
+        fmt0(machLimits().power || 11) + ' кВт, патрон ' + (machLimits().chuck || '—') +
+        ', пруток до Ø' + fmt0(machLimits().bar || 0) + ' мм.</div>' +
       '<div class="res" id="sp_out"></div>' +
       '<button class="btn ghost sm" type="button" id="sp_save" style="margin-top:8px">Сохранить расчёт</button>' +
       '</div>' +
@@ -97,6 +101,7 @@ SCREENS.speed = {
     $('sp_auto').addEventListener('click', spAuto);
     $('sp_save').addEventListener('click', () => saveCalc('Режимы резания', spRows));
     if(!$('sp_vc').value) $('sp_vc').value = '200';
+    if($('sp_p') && !$('sp_p').value) $('sp_p').value = String(machLimits().power || 11);
     spCalc();
   }
 };
@@ -182,6 +187,9 @@ function spCalc(){
     detail = 'Подача ' + fmt(f, 2) + ' мм/об · сверло ⌀' + fmt(Dm, 1);
   }
   const pm = num('sp_p', 0);
+  const lim = (typeof machLimits === 'function') ? machLimits() : {};
+  const nMax = lim.nMax || 4000;
+  const nChuck = lim.nChuck || nMax;
   const load = pm > 0 ? P / pm * 100 : NaN;
   const M = n > 0 ? 9550 * P / n : NaN;
   const loadCls = isFinite(load) ? (load > 85 ? 'bad' : (load > 70 ? '' : 'good')) : '';
@@ -206,11 +214,14 @@ function spCalc(){
     '<div class="note" style="grid-column:1/-1">' +
       (b.mode === 'n'
         ? '<b>G97 S' + fmt0(n) + '</b> — постоянные обороты; Vc на ⌀' + fmt(Dm, 1) + ' = ' + fmt(vcFact, 1) + ' м/мин.'
-        : '<b>G96 S' + fmt0(vcSet) + ' LIMS=' + Math.min(4000, Math.ceil(n / 100) * 100) +
+        : '<b>G96 S' + fmt0(vcSet) + ' LIMS=' + Math.min(nMax, Math.ceil(n / 100) * 100) +
           '</b> — постоянная Vc; обороты на ⌀' + fmt(Dm, 1) + ' = ' + fmt0(n) + ' об/мин.') +
     '</div>' +
-    (n > 4000 ? '<div class="warn" style="grid-column:1/-1">' + fmt0(n) +
-      ' об/мин выше паспортного лимита шпинделя 4000 — снизьте Vc или задайте LIMS=4000.</div>' : '') +
+    (n > nMax ? '<div class="warn" style="grid-column:1/-1">' + fmt0(n) +
+      ' об/мин выше паспортного лимита станка ' + fmt0(nMax) + ' — снизьте Vc или задайте LIMS=' + fmt0(nMax) + '.</div>' : '') +
+    (n > nChuck && n <= nMax ? '<div class="warn" style="grid-column:1/-1">' + fmt0(n) +
+      ' об/мин выше рабочего предела патрона ' + (lim.chuck || '') + ' (' + fmt0(nChuck) +
+      ' об/мин). Проверьте допустимые обороты кулачков.</div>' : '') +
     (b.op === 'turn' ? '<div class="note" style="grid-column:1/-1">Мощность = ap × f × Vc × kc / 60000. ' +
       'Сейчас: kc = ' + fmt0(kc) + ' Н/мм², Vc = ' + fmt(vcFact, 1) + ' м/мин. Сталь обрабатывают на большей ' +
       'скорости, чем нержавейку и чугун, поэтому при равном съёме она грузит шпиндель сильнее — ' +
