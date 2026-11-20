@@ -235,6 +235,7 @@ SCREENS.cmds = {
   title: 'Команды',
   render(){
     if(cncInfo().id === 'fanuc') return fanucCmdsPage();
+    if(cncInfo().id === 'osp') return ospCmdsPage();
     const g828 = [
       ['G0','ускоренный ход','G0 X100 Z50'],
       ['G1','линейная интерполяция, F в мм/об или мм/мин','G1 X40 Z-30 F0,2'],

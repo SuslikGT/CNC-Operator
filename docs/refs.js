@@ -5,6 +5,7 @@ SCREENS.siemens = {
   title: 'Стойка',
   render(){
     if(cncInfo().id === 'fanuc') return fanucSystemPage();
+    if(cncInfo().id === 'osp') return ospSystemPage();
     let h = '<div class="card">' +
       '<div class="kv"><span class="k">Стойка</span><span class="v">SINUMERIK 828D (T) · Operate, 10,4"</span></div>' +
       '<div class="kv"><span class="k">Станок</span><span class="v">Headman T65M II/750, оси X Z C</span></div>' +

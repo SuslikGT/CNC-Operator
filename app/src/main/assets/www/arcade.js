@@ -20,6 +20,7 @@ function arcHalt(){
 }
 function arcStop(){
   arcHalt();
+  if(ARC.onVis){ document.removeEventListener('visibilitychange', ARC.onVis); ARC.onVis = null; }
   ARC.snake = null;
   ARC.game = null;
 }
@@ -216,6 +217,9 @@ SCREENS.arcade = {
       if(head[0] < 0 || head[0] >= N || head[1] < 0 || head[1] >= N ||
          st.snake.some(p => p[0] === head[0] && p[1] === head[1])){
         st.dead = true;
+        clearInterval(ARC.timer);
+        ARC.timer = 0;
+        if(scoreEl) scoreEl.textContent = 'Счёт: ' + st.score + ' · нажмите на поле, чтобы начать заново';
         arcSaveBest('snake', st.score, (a, b) => a > b);
         draw();
         return;
@@ -238,9 +242,11 @@ SCREENS.arcade = {
       const nd = map[d];
       if(!nd) return;
       if(nd[0] === -st.dir[0] && nd[1] === -st.dir[1]) return;
+      if(nd[0] === -st.next[0] && nd[1] === -st.next[1]) return;
       st.next = nd;
     };
     $$('[data-dir]').forEach(b => b.addEventListener('click', () => turn(b.dataset.dir)));
+    if(ARC.keys) window.removeEventListener('keydown', ARC.keys);
     ARC.keys = e => {
       if(!document.getElementById('arc_cv')){ window.removeEventListener('keydown', ARC.keys); return; }
       const map = {ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right'};
@@ -267,8 +273,18 @@ SCREENS.arcade = {
       turn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
     }, {passive: true});
     window.addEventListener('keydown', ARC.keys);
+    const startTimer = () => { if(!ARC.timer && ARC.snake && !ARC.snake.dead) ARC.timer = setInterval(tick, 150); };
+    ARC.onVis = () => {
+      if(document.hidden){
+        if(ARC.timer){ clearInterval(ARC.timer); ARC.timer = 0; }
+      } else if(ARC.game === 'snake'){
+        startTimer();
+      }
+    };
+    document.addEventListener('visibilitychange', ARC.onVis);
+    cv.addEventListener('click', () => { if(st.dead){ ARC.game = 'snake'; paint(); } });
     draw();
-    ARC.timer = setInterval(tick, 150);
+    startTimer();
     const again = $('arc_again');
     if(again) again.addEventListener('click', () => { ARC.game = 'snake'; paint(); });
   }

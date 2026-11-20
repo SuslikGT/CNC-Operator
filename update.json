@@ -1,6 +1,6 @@
 {
-    "url":  "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-2.0.25.apk",
-    "versionCode":  32,
-    "version":  "2.0.25",
-    "notes":  "Схема резьбы: d2, d1 и d3 теперь считаются по профилю — метрическая 60°, трубная 55°, трапецеидальная 30°. Проверены все разделы и расчёты."
+    "url":  "https://raw.githubusercontent.com/SuslikGT/CNC-Operator/main/dist/cnc-operator-2.0.26.apk",
+    "versionCode":  33,
+    "version":  "2.0.26",
+    "notes":  "Змейка: пауза при сворачивании, перезапуск тапом по полю, счёт после проигрыша, без самоповорота на быстрых свайпах. Новый станок Okuma Genos L3000 со стойкой OSP-P300L-E."
 }
